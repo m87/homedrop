@@ -1,4 +1,4 @@
-package org.homedrop.plugin;
+package org.homedrop;
 
 public enum PluginPermissions {
     FILES, NET
