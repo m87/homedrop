@@ -1,8 +1,20 @@
 server: (String)
-devices-def:
-    devices: []
+plugins:
     'name':
-        type: {primary,logic}
-        device: (String)
-        mount: (String)
-        args: (struct)
+        jar: (String)
+devices: (String)           #default $RUNTIME/devices
+                            {'name':
+                                type: {primary,logic}       #default primary
+                                device: (String)
+                                mount: (String)
+                                args: (struct)
+                                }
+
+#system level
+rules:
+    path: (String)          #default $RUNTIME/rules/system.rules
+    user: (String)          #default $RUNTIME/rules/user/*.rules
+
+log:
+    system: (String)        #default $RUNTIME/log/system.log
+    session: (String)       #default $RUNTIME/log/session.log
