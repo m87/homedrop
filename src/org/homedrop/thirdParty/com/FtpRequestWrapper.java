@@ -1,4 +1,4 @@
-package org.homedrop.thirdParty;
+package org.homedrop.thirdParty.com;
 
 public interface FtpRequestWrapper {
 }
