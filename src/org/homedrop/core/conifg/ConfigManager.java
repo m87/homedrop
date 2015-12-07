@@ -2,6 +2,7 @@ package org.homedrop.core.conifg;
 
 import org.homedrop.core.model.Device;
 import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
 
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class ConfigManager {
 
     public void setDevices(Map<Short, Device> devices) {
         if(this.devices != null){
-            Log.w("[DEV]", "Devices redefinition!", systemLog);
+            Log.w(LogTag.DEV, "Devices redefinition!", systemLog);
         }
         this.devices = devices;
     }
