@@ -1,0 +1,8 @@
+server: (String)
+devices-def:
+    devices: []
+    'name':
+        type: {primary,logic}
+        device: (String)
+        mount: (String)
+        args: (struct)
