@@ -1,7 +1,5 @@
-package org.homedrop.plugin;
+package org.homedrop;
 
-import org.homedrop.core.Result;
-import org.homedrop.core.model.Command;
 
 import java.util.List;
 

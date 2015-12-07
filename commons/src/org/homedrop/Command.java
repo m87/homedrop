@@ -1,4 +1,4 @@
-package org.homedrop.core.model;
+package org.homedrop;
 
 public class Command {
     private String name;
