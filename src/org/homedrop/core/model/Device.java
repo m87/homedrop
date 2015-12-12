@@ -1,6 +1,11 @@
 package org.homedrop.core.model;
 
-public class Device {
+import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
+
+import java.io.IOException;
+
+public abstract class Device {
     private static short ID=0;
     private static short id;
     private String name;
@@ -14,6 +19,8 @@ public class Device {
         this.dev = dev;
         this.mount = mount;
     }
+    public abstract void mount();
+    public abstract void umount();
 
 
     public static short getID() {

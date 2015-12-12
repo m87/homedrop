@@ -17,4 +17,13 @@ public class Log {
 
     }
 
+
+    public static void i(String tag, String content, String file){
+
+    }
+    public static void i(String tag, String content){
+
+    }
+
+
 }
