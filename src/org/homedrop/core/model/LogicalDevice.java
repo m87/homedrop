@@ -4,7 +4,7 @@ import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
 import java.io.IOException;
-
+/** Logical device representation */
 public class LogicalDevice extends Device{
     public LogicalDevice(String name, String dev, String mount) {
         super(name, dev, mount);

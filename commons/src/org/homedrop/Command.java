@@ -1,5 +1,6 @@
 package org.homedrop;
 
+/** Command model*/
 public class Command {
     private String name;
     private String[] args;

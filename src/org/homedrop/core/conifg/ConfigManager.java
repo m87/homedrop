@@ -13,7 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** Main configuration class */
 public class ConfigManager {
+    /** Available servers */
     public enum ServerType{APACHE}
     private static ConfigManager ourInstance = new ConfigManager();
 
@@ -24,6 +26,10 @@ public class ConfigManager {
     private ConfigManager() {
     }
 
+    /** Loads configuration from yaml file
+     *
+     * @param rootPath path to main config file
+     */
     public void loadConfiguration(String rootPath){
         try {
             YamlReader reader = new YamlReader(new FileReader(rootPath));

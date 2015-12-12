@@ -6,6 +6,7 @@ import org.apache.ftpserver.listener.ListenerFactory;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
+/** Apache ftp server representation */
 public class ApacheFtpServer implements FtpServer{
     private FtpServerFactory serverFactory;
     private ListenerFactory listenerFactory;

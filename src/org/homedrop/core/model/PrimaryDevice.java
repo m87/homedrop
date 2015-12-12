@@ -4,7 +4,7 @@ import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
 import java.io.IOException;
-
+/** Real device representation */
 public class PrimaryDevice extends Device{
 
     public PrimaryDevice(String name, String dev, String mount) {
