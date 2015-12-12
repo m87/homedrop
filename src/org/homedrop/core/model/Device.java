@@ -1,11 +1,8 @@
 package org.homedrop.core.model;
 
-import org.homedrop.core.utils.Log;
-import org.homedrop.core.utils.LogTag;
-
-import java.io.IOException;
 
 public abstract class Device {
+    public enum DeviceType {LOGICAL, PRIMARY}
     private static short ID=0;
     private static short id;
     private String name;
@@ -21,6 +18,12 @@ public abstract class Device {
     }
     public abstract void mount();
     public abstract void umount();
+
+    public static Device create(String type, String name, String dev, String mount){
+        if(type.toLowerCase().equals(DeviceType.LOGICAL.name().toLowerCase())) return new LogicalDevice(name,dev,mount);
+        if(type.toLowerCase().equals(DeviceType.PRIMARY.name().toLowerCase())) return new PrimaryDevice(name,dev,mount);
+        return null;
+    }
 
 
     public static short getID() {

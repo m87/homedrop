@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.util.Map;
 
 public class ConfigManager {
+    public enum ServerType{APACHE}
     private static ConfigManager ourInstance = new ConfigManager();
 
     public static ConfigManager getInstance() {
