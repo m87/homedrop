@@ -23,5 +23,7 @@ public class ConfigManagerTest {
         assertEquals("/dev/sda111", devices.getDevices().get((short)0).getDev());
         assertEquals("/home/homedrop/db1", devices.getDevices().get((short)0).getMount());
 
+        assertEquals(devices.getDevices().size(), 2);
+
     }
 }
