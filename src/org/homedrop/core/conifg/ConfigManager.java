@@ -5,8 +5,12 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import org.homedrop.core.model.Device;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.manager.DevicesManager;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ConfigManager {
@@ -28,6 +32,15 @@ public class ConfigManager {
 
             this.serverType = (String)map.get("server");
             this.serverConfigPath = (String)map.get("server-confg");
+            Map<String, Map> devices = ((Map) map.get("devices-def"));
+            for(String m :devices.keySet()){
+                DevicesManager.getInstance().addDevice(Device.create(
+                        (String)devices.get(m).get("type"),
+                        m,
+                        (String)devices.get(m).get("device"),
+                        (String)devices.get(m).get("mountpoint")));
+            }
+
 
         } catch (FileNotFoundException e) {
             Log.d(LogTag.CONFIG, "File not found");

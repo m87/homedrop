@@ -26,8 +26,8 @@ public abstract class Device {
     }
 
 
-    public static short getID() {
-        return ID;
+    public short getID() {
+        return id;
     }
 
     public String getName() {

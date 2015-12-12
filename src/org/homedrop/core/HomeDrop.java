@@ -16,7 +16,7 @@ public class HomeDrop {
     }
 
     public HomeDrop(){
-        Device.create(config.getServerType(),"main", "/dev/sdc1", "/home/rt/testMount").mount();
+        Device.create("logical","main", "/home/rt/testMount", "/home/rt/testMount1").mount();
         //server = ServerFactory.createServer(config.getServerType());
         //server.setUp(config.getServerConfigPath());
     }
