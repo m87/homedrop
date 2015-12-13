@@ -3,13 +3,22 @@ package org.homedrop.thirdParty.server;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.ftpserver.FtpServerFactory;
-import org.apache.ftpserver.ftplet.FtpException;
+import org.apache.ftpserver.ftplet.*;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.usermanager.PasswordEncryptor;
+import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
+import org.apache.ftpserver.usermanager.impl.BaseUser;
+import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Apache ftp server representation */
@@ -31,7 +40,72 @@ public class ApacheFtpServer implements FtpServer{
             Object object = reader.read();
             Map map = (Map)object;
 
-            listenerFactory.setPort((int)map.get("port"));
+            listenerFactory.setPort(Integer.parseInt((String)map.get("port")));
+
+            serverFactory.addListener("default", listenerFactory.createListener());
+            PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
+            userManagerFactory.setFile(new File("/home/rt/users.props"));
+            userManagerFactory.setPasswordEncryptor(new PasswordEncryptor() {
+                @Override
+                public String encrypt(String s) {
+                    return s;
+                }
+
+                @Override
+                public boolean matches(String s, String s1) {
+                    return s.equals(s1);
+                }
+            });
+
+            BaseUser user = new BaseUser();
+            user.setName("test");
+            user.setPassword("test");
+            user.setHomeDirectory("/home/rt/testuser");
+            List<Authority> authorities = new ArrayList<Authority>();
+            authorities.add(new WritePermission());
+            user.setAuthorities(authorities);
+            UserManager um = userManagerFactory.createUserManager();
+            try{
+                um.save(user);
+            }catch (FtpException e){
+
+            }
+            serverFactory.setUserManager(um);
+            Map<String, Ftplet> m = new HashMap<>();
+            m.put("ftplet1", new Ftplet() {
+                @Override
+                public void init(FtpletContext ftpletContext) throws FtpException {
+
+                }
+
+                @Override
+                public void destroy() {
+
+                }
+
+                @Override
+                public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
+                    return FtpletResult.DEFAULT;
+                }
+
+                @Override
+                public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
+                    return FtpletResult.DEFAULT;
+                }
+
+                @Override
+                public FtpletResult onConnect(FtpSession ftpSession) throws FtpException, IOException {
+                    return FtpletResult.DEFAULT;
+                }
+
+                @Override
+                public FtpletResult onDisconnect(FtpSession ftpSession) throws FtpException, IOException {
+                    return FtpletResult.DEFAULT;
+                }
+            });
+
+            serverFactory.setFtplets(m);
+
 
         } catch (FileNotFoundException e) {
             Log.d(LogTag.SERVER, "config file not found");

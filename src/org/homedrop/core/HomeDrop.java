@@ -18,9 +18,11 @@ public class HomeDrop {
     }
     /** Starts new session.*/
     public HomeDrop(){
-        Device.create("logical","main", "/home/rt/testMount", "/home/rt/testMount1").mount();
-        //server = ServerFactory.createServer(config.getServerType());
-        //server.setUp(config.getServerConfigPath());
+        config.loadConfiguration("./test-env/homedrop.cfg");
+        //Device.create("logical","main", "/home/rt/testMount", "/home/rt/testMount1").mount();
+        server = ServerFactory.createServer(config.getServerType());
+        server.setUp(config.getServerConfigPath());
+
     }
 
 
@@ -31,7 +33,7 @@ public class HomeDrop {
 
     /** Main method */
     public void start(){
-
+        server.start();
 
         onExit();
     }
