@@ -1,6 +1,6 @@
 package org.homedrop.config;
 
-import org.homedrop.core.conifg.ConfigManager;
+import org.homedrop.manager.ConfigManager;
 import org.homedrop.core.model.PrimaryDevice;
 import org.homedrop.manager.DevicesManager;
 import org.junit.Test;

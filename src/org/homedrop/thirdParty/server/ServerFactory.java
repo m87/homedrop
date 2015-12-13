@@ -1,6 +1,6 @@
 package org.homedrop.thirdParty.server;
 
-import org.homedrop.core.conifg.ConfigManager;
+import org.homedrop.manager.ConfigManager;
 
 /** Server factory */
 public class ServerFactory {

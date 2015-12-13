@@ -1,16 +1,13 @@
-package org.homedrop.core.conifg;
+package org.homedrop.manager;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.homedrop.core.model.Device;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.manager.DevicesManager;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /** Main configuration class */

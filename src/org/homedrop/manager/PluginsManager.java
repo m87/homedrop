@@ -1,17 +1,17 @@
-package org.homedrop.plugin;
+package org.homedrop.manager;
 
 
 import org.homedrop.core.LifeCycle;
 
 /** Plugins manager */
-public class PluginManager implements LifeCycle {
-    private static PluginManager ourInstance = new PluginManager();
+public class PluginsManager implements LifeCycle {
+    private static PluginsManager ourInstance = new PluginsManager();
 
-    public static PluginManager getInstance() {
+    public static PluginsManager getInstance() {
         return ourInstance;
     }
 
-    private PluginManager() {
+    private PluginsManager() {
     }
 
     @Override
