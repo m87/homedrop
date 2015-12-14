@@ -2,8 +2,10 @@ package org.homedrop.manager;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import org.apache.ftpserver.ftplet.UserManager;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.Device;
+import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
@@ -11,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Main configuration class */
 public class ConfigManager implements LifeCycle{
@@ -63,6 +66,16 @@ public class ConfigManager implements LifeCycle{
                     "device",
                     (String) deviceMap.get("device"),
                     (String) deviceMap.get("mountpoint")));
+
+            YamlReader usersReader = new YamlReader(new FileReader((String)map.get("users")));
+            Object usersObject = usersReader.read();
+            Map<String, Map> usersMap = (Map)usersObject;
+
+            for(String m : usersMap.keySet()){
+                User u = new User(m,(String)usersMap.get(m).get("pass"), (String)usersMap.get(m).get("home"));
+                UsersManager.getInstance().addUser(u.getId(),u);
+            }
+
 
 
         } catch (FileNotFoundException e) {
