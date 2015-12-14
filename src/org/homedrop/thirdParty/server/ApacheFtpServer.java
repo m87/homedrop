@@ -34,6 +34,11 @@ public class ApacheFtpServer implements FtpServer{
     }
 
     @Override
+    public void setUpUsers() {
+
+    }
+
+    @Override
     public void setUp(String path) {
         try {
             YamlReader reader = new YamlReader(new FileReader(path));

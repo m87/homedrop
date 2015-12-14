@@ -21,6 +21,7 @@ public class HomeDrop {
         config.loadConfiguration("./test-env/homedrop.cfg");
         //Device.create("logical","main", "/home/rt/testMount", "/home/rt/testMount1").mount();
         server = ServerFactory.createServer(config.getServerType());
+        server.setUpUsers();
         server.setUp(config.getServerConfigPath());
 
     }
