@@ -1,7 +1,6 @@
 package org.homedrop.core;
 
 import org.homedrop.manager.ConfigManager;
-import org.homedrop.core.model.Device;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 

@@ -1,7 +1,7 @@
 package org.homedrop.config;
 
 import org.homedrop.manager.ConfigManager;
-import org.homedrop.core.model.PrimaryDevice;
+import org.homedrop.core.model.device.PrimaryDevice;
 import org.homedrop.manager.DevicesManager;
 import org.junit.Test;
 import static org.junit.Assert.*;

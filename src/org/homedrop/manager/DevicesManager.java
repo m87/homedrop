@@ -1,7 +1,7 @@
 package org.homedrop.manager;
 
 import org.homedrop.core.LifeCycle;
-import org.homedrop.core.model.Device;
+import org.homedrop.core.model.device.Device;
 
 
 public class DevicesManager implements LifeCycle{

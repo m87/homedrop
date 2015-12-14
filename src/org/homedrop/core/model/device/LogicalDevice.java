@@ -1,4 +1,4 @@
-package org.homedrop.core.model;
+package org.homedrop.core.model.device;
 
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;

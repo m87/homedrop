@@ -1,4 +1,4 @@
-package org.homedrop.core.model;
+package org.homedrop.core.model.device;
 
 /** Device model*/
 public abstract class Device {
