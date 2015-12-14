@@ -9,6 +9,8 @@ import org.apache.ftpserver.usermanager.PasswordEncryptor;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
 import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
+import org.homedrop.Command;
+import org.homedrop.core.HomeDrop;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
@@ -39,7 +41,7 @@ public class ApacheFtpServer implements FtpServer{
     }
 
     @Override
-    public void setUp(String path) {
+    public void setUp(String path, final HomeDrop parent) {
         try {
             YamlReader reader = new YamlReader(new FileReader(path));
             Object object = reader.read();
@@ -91,21 +93,25 @@ public class ApacheFtpServer implements FtpServer{
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
                     System.out.print(ftpRequest.getCommand());
+                    parent.beforeCommand(new Command("a",new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
 
                 @Override
                 public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
+                    parent.afterCommand(new Command("a",new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
 
                 @Override
                 public FtpletResult onConnect(FtpSession ftpSession) throws FtpException, IOException {
+                    parent.onConnect();
                     return FtpletResult.DEFAULT;
                 }
 
                 @Override
                 public FtpletResult onDisconnect(FtpSession ftpSession) throws FtpException, IOException {
+                    parent.onDisconnect();
                     return FtpletResult.DEFAULT;
                 }
             });

@@ -1,11 +1,13 @@
 package org.homedrop.core;
 
+import org.homedrop.Command;
+import org.homedrop.Result;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
 /** Main system class*/
-public class HomeDrop {
+public class HomeDrop implements FtpHandler{
     private FtpServer server;
     private ConfigManager config = ConfigManager.getInstance();
 
@@ -13,18 +15,32 @@ public class HomeDrop {
     public HomeDrop(String session){
 
         server = ServerFactory.createServer(config.getServerType());
-        server.setUp(config.getServerConfigPath());
+        server.setUp(config.getServerConfigPath(), this);
     }
     /** Starts new session.*/
     public HomeDrop(){
         config.loadConfiguration("./test-env/homedrop.cfg");
-        //Device.create("logical","main", "/home/rt/testMount", "/home/rt/testMount1").mount();
         server = ServerFactory.createServer(config.getServerType());
         server.setUpUsers();
-        server.setUp(config.getServerConfigPath());
+        server.setUp(config.getServerConfigPath(), this);
 
     }
-
+    @Override
+    public Result beforeCommand(Command command){
+        return null;
+    }
+    @Override
+    public Result afterCommand(Command command){
+        return null;
+    }
+    @Override
+    public Result onConnect(){
+        return null;
+    }
+    @Override
+    public Result onDisconnect(){
+        return null;
+    }
 
     /** Clean */
     public void onExit(){
