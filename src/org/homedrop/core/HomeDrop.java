@@ -5,6 +5,7 @@ import org.homedrop.Plugin;
 import org.homedrop.Result;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.PluginsManager;
+import org.homedrop.manager.UsersManager;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
@@ -25,7 +26,7 @@ public class HomeDrop implements FtpHandler{
     public HomeDrop(){
         config.loadConfiguration("./test-env/homedrop.cfg");
         server = ServerFactory.createServer(config.getServerType());
-        server.setUpUsers();
+        server.setUpUsers(UsersManager.getInstance().getUsers().values());
         server.setUp(config.getServerConfigPath(), this);
 
     }

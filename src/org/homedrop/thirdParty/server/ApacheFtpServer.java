@@ -4,6 +4,7 @@ import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.*;
+import org.apache.ftpserver.ftplet.User;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.PasswordEncryptor;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
@@ -11,6 +12,7 @@ import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.Command;
 import org.homedrop.core.HomeDrop;
+import org.homedrop.core.model.*;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
@@ -18,10 +20,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /** Apache ftp server representation */
 public class ApacheFtpServer implements FtpServer{
@@ -36,21 +35,8 @@ public class ApacheFtpServer implements FtpServer{
     }
 
     @Override
-    public void setUpUsers() {
-
-    }
-
-    @Override
-    public void setUp(String path, final HomeDrop parent) {
-        try {
-            YamlReader reader = new YamlReader(new FileReader(path));
-            Object object = reader.read();
-            Map map = (Map)object;
-
-            listenerFactory.setPort(Integer.parseInt((String)map.get("port")));
-
-            serverFactory.addListener("default", listenerFactory.createListener());
-            PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
+    public void setUpUsers(Collection<org.homedrop.core.model.User> users) {
+PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
             userManagerFactory.setFile(new File("/home/rt/users.props"));
             userManagerFactory.setPasswordEncryptor(new PasswordEncryptor() {
                 @Override
@@ -63,21 +49,37 @@ public class ApacheFtpServer implements FtpServer{
                     return s.equals(s1);
                 }
             });
-
+        UserManager um = userManagerFactory.createUserManager();
+        for(org.homedrop.core.model.User u : users) {
             BaseUser user = new BaseUser();
-            user.setName("test");
-            user.setPassword("test");
-            user.setHomeDirectory("/home/rt/testuser");
+            user.setName(u.getLogin());
+            user.setPassword(u.getPassowrd());
+            user.setHomeDirectory(u.getHome());
             List<Authority> authorities = new ArrayList<Authority>();
             authorities.add(new WritePermission());
             user.setAuthorities(authorities);
-            UserManager um = userManagerFactory.createUserManager();
-            try{
+            try {
                 um.save(user);
-            }catch (FtpException e){
+            } catch (FtpException e) {
 
             }
+        }
             serverFactory.setUserManager(um);
+    }
+
+
+    @Override
+    public void setUp(String path, final HomeDrop parent) {
+        try {
+            YamlReader reader = new YamlReader(new FileReader(path));
+            Object object = reader.read();
+            Map map = (Map)object;
+
+            listenerFactory.setPort(Integer.parseInt((String)map.get("port")));
+
+            serverFactory.addListener("default", listenerFactory.createListener());
+
+
             Map<String, Ftplet> m = new HashMap<>();
             m.put("ftplet1", new Ftplet() {
                 @Override

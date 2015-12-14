@@ -13,7 +13,7 @@ public class Log {
     private static void log(String lvl, String tag, String content, String path){
         try {
             FileWriter file = new FileWriter(path);
-            file.write(lvl+tag+": " +content);
+            file.append(lvl+tag+": " +content + '\n');
         } catch (IOException e) {
             e.printStackTrace();
         }
