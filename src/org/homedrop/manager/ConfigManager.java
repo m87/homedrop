@@ -2,6 +2,7 @@ package org.homedrop.manager;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.Device;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -12,7 +13,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Main configuration class */
-public class ConfigManager {
+public class ConfigManager implements LifeCycle{
+    @Override
+    public void onStart() {
+
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
+    public void onExit() {
+
+    }
+
     /** Available servers */
     public enum ServerType{APACHE}
     private static ConfigManager ourInstance = new ConfigManager();
@@ -39,9 +60,9 @@ public class ConfigManager {
             HashMap deviceMap = (HashMap)map.get("device");
 
             DevicesManager.getInstance().setDevice(Device.create((String) deviceMap.get("type"),
-                        "device",
-                        (String) deviceMap.get("device"),
-                        (String) deviceMap.get("mountpoint")));
+                    "device",
+                    (String) deviceMap.get("device"),
+                    (String) deviceMap.get("mountpoint")));
 
 
         } catch (FileNotFoundException e) {

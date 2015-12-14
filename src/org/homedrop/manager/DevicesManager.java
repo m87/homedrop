@@ -34,6 +34,11 @@ public class DevicesManager implements LifeCycle{
     }
 
     @Override
+    public void onResume() {
+
+    }
+
+    @Override
     public void onExit() {
 
     }

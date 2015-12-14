@@ -1,6 +1,8 @@
 package org.homedrop.manager;
 
-public class FilesManager {
+import org.homedrop.core.LifeCycle;
+
+public class FilesManager implements LifeCycle{
     private static FilesManager ourInstance = new FilesManager();
 
     public static FilesManager getInstance() {
@@ -11,5 +13,23 @@ public class FilesManager {
     }
 
 
+    @Override
+    public void onStart() {
 
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
+    public void onExit() {
+
+    }
 }

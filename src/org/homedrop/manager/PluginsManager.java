@@ -25,6 +25,11 @@ public class PluginsManager implements LifeCycle {
     }
 
     @Override
+    public void onResume() {
+
+    }
+
+    @Override
     public void onExit() {
 
     }

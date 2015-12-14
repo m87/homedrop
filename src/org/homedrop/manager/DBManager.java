@@ -1,6 +1,8 @@
 package org.homedrop.manager;
 
-public class DBManager {
+import org.homedrop.core.LifeCycle;
+
+public class DBManager implements LifeCycle{
     private static DBManager ourInstance = new DBManager();
 
     public static DBManager getInstance() {
@@ -8,5 +10,25 @@ public class DBManager {
     }
 
     private DBManager() {
+    }
+
+    @Override
+    public void onStart() {
+
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
+    public void onExit() {
+
     }
 }
