@@ -2,6 +2,7 @@ package org.homedrop.manager;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import org.homedrop.core.Default;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.device.Device;
 import org.homedrop.core.model.User;
@@ -79,6 +80,11 @@ public class ConfigManager implements LifeCycle{
                 PluginsManager.getInstance().addPlugin(pluginsMap.get(m), m);
             }
 
+            String logfile = (String)map.get("log-file");
+
+            if(null != logfile) {
+                Default.LOGFILE = logfile;
+            }
 
 
         } catch (FileNotFoundException e) {
