@@ -1,8 +1,10 @@
 package org.homedrop.core;
 
 import org.homedrop.Command;
+import org.homedrop.Plugin;
 import org.homedrop.Result;
 import org.homedrop.manager.ConfigManager;
+import org.homedrop.manager.PluginsManager;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
