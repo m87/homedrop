@@ -8,6 +8,7 @@ import org.homedrop.core.utils.LogTag;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.Map;
 
 /** Main configuration class */
@@ -35,14 +36,12 @@ public class ConfigManager {
 
             this.serverType = (String)map.get("server");
             this.serverConfigPath = (String)map.get("server-confg");
-            Map<String, Map> devices = ((Map) map.get("devices-def"));
-            for(String m :devices.keySet()){
-                DevicesManager.getInstance().addDevice(Device.create(
-                        (String)devices.get(m).get("type"),
-                        m,
-                        (String)devices.get(m).get("device"),
-                        (String)devices.get(m).get("mountpoint")));
-            }
+            HashMap deviceMap = (HashMap)map.get("device");
+
+            DevicesManager.getInstance().setDevice(Device.create((String) deviceMap.get("type"),
+                        "device",
+                        (String) deviceMap.get("device"),
+                        (String) deviceMap.get("mountpoint")));
 
 
         } catch (FileNotFoundException e) {
