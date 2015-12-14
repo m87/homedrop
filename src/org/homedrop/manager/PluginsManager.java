@@ -17,7 +17,9 @@ public class PluginsManager implements LifeCycle {
         return ourInstance;
     }
 
-
+    public Map<String, Plugin> getPlugins() {
+        return plugins;
+    }
 
     public void addPlugin(String path, String name){
         plugins.put(name, PluginLoader.loadFromJar(path,name));

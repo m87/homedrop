@@ -8,6 +8,8 @@ import org.homedrop.manager.PluginsManager;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
+import java.util.Map;
+
 /** Main system class*/
 public class HomeDrop implements FtpHandler{
     private FtpServer server;
@@ -37,7 +39,12 @@ public class HomeDrop implements FtpHandler{
     }
     @Override
     public Result onConnect(){
-        return null;
+        Map<String, Plugin> map = PluginsManager.getInstance().getPlugins();
+        for(String p : map.keySet()) {
+            System.out.print("["+map.get(p)+"]: ");
+            map.get(p).handleCommand("aaa", null);
+        }
+            return null;
     }
     @Override
     public Result onDisconnect(){

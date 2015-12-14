@@ -73,6 +73,11 @@ public class ConfigManager implements LifeCycle{
                 User u = new User(m,(String)usersMap.get(m).get("pass"), (String)usersMap.get(m).get("home"));
                 UsersManager.getInstance().addUser(u.getId(),u);
             }
+            Map<String, String> pluginsMap = (Map)map.get("plugins");
+
+            for(String m: pluginsMap.keySet()){
+                PluginsManager.getInstance().addPlugin(pluginsMap.get(m), m);
+            }
 
 
 

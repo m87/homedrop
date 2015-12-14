@@ -3,6 +3,7 @@ package org.homedrop.config;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.core.model.device.PrimaryDevice;
 import org.homedrop.manager.DevicesManager;
+import org.homedrop.manager.PluginsManager;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -22,6 +23,9 @@ public class ConfigManagerTest {
         assertTrue(devices.getDevice() instanceof PrimaryDevice);
         assertEquals("/dev/sda111", devices.getDevice().getDev());
         assertEquals("/home/homedrop/db1", devices.getDevice().getMount());
+
+        PluginsManager plugins  = PluginsManager.getInstance();
+        assertNotNull(plugins.getPlugins().get("PrintPlugin"));
 
 
     }

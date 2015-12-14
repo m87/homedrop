@@ -92,7 +92,6 @@ public class ApacheFtpServer implements FtpServer{
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    System.out.print(ftpRequest.getCommand());
                     parent.beforeCommand(new Command("a",new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
