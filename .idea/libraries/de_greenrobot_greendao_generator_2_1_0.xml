@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="de.greenrobot:greendao-generator:2.1.0" type="repository">
+    <properties maven-id="de.greenrobot:greendao-generator:2.1.0" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/greendao-generator-2.1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/freemarker-2.3.23.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

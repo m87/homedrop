@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="org.apache.logging.log4j:slf4j-impl:2.0-alpha2" type="repository">
+    <properties maven-id="org.apache.logging.log4j:slf4j-impl:2.0-alpha2" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-impl-2.0-alpha2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-ext-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cal10n-api-0.7.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-api-2.0-alpha2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-core-2.0-alpha2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

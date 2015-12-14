@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="org.apache.ftpserver:ftpserver-core:1.0.6" type="repository">
+    <properties maven-id="org.apache.ftpserver:ftpserver-core:1.0.6" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/ftpserver-core-1.0.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ftplet-api-1.0.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.5.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/mina-core-2.0.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
