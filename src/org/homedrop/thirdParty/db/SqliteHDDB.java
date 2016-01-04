@@ -1,22 +1,51 @@
 package org.homedrop.thirdParty.db;
 
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
+import org.homedrop.manager.ConfigManager;
+import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 
-import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public class SqliteHDDB implements HDDB{
-    private Connection open(){
-        return null;
-    }
-    private  void close(Connection connection){}
+    private ConnectionSource connectionSource;
+    private Dao<UserEntity,Long> userDao;
 
+    public SqliteHDDB(){
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        String dbConnectionString = "jdbc:sqlite:"+ ConfigManager.getInstance().getDbPath();
+        try {
+            connectionSource = new JdbcConnectionSource(dbConnectionString);
+
+            userDao = DaoManager.createDao(connectionSource, UserEntity.class);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
 
     @Override
     public void onCreate() {
-
+        try {
+            TableUtils.createTable(connectionSource, UserEntity.class);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

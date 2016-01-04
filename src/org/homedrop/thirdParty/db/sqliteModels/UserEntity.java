@@ -4,7 +4,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "users")
-public class User {
+public class UserEntity {
 
     @DatabaseField(id = true, generatedId = true)
     private long id;
@@ -18,7 +18,7 @@ public class User {
     @DatabaseField(canBeNull = false)
     private String home;
 
-    public User(){
+    public UserEntity(){
     }
 
     public void setHome(String home) {

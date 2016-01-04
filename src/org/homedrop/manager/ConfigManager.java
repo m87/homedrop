@@ -86,6 +86,8 @@ public class ConfigManager implements LifeCycle{
                 Default.LOGFILE = logfile;
             }
 
+            this.dbPath = (String)map.get("db");
+
 
         } catch (FileNotFoundException e) {
             Log.d(LogTag.CONFIG, "File not found");
@@ -102,6 +104,12 @@ public class ConfigManager implements LifeCycle{
     private String serverType;
     public String getServerType() {
         return serverType;
+    }
+
+    private String dbPath;
+
+    public String getDbPath() {
+        return dbPath;
     }
 
     private String serverConfigPath;

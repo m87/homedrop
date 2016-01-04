@@ -4,17 +4,17 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "fileTag")
-public class FileTag {
+public class FileTagEntity {
     @DatabaseField(id = true, generatedId = true)
     private long id;
 
     @DatabaseField(canBeNull = false, foreign = true)
-    private File file;
+    private FileEntity file;
 
     @DatabaseField(canBeNull = false, foreign = true)
-    private Tag tag;
+    private TagEntity tagEntity;
 
-    public FileTag(){}
+    public FileTagEntity(){}
 
     public long getId() {
         return id;
@@ -24,19 +24,19 @@ public class FileTag {
         this.id = id;
     }
 
-    public File getFile() {
+    public FileEntity getFile() {
         return file;
     }
 
-    public void setFile(File file) {
+    public void setFile(FileEntity file) {
         this.file = file;
     }
 
-    public Tag getTag() {
-        return tag;
+    public TagEntity getTagEntity() {
+        return tagEntity;
     }
 
-    public void setTag(Tag tag) {
-        this.tag = tag;
+    public void setTagEntity(TagEntity tagEntity) {
+        this.tagEntity = tagEntity;
     }
 }

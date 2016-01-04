@@ -6,7 +6,7 @@ import com.j256.ormlite.table.DatabaseTable;
 import java.sql.Date;
 
 @DatabaseTable(tableName = "files")
-public class File {
+public class FileEntity {
 
     @DatabaseField(id = true, generatedId = true)
     private long id;
@@ -27,9 +27,9 @@ public class File {
     private Date lastChange;
 
     @DatabaseField(canBeNull = false, foreign = true)
-    private User owner;
+    private UserEntity owner;
 
-    public File(){
+    public FileEntity(){
 
     }
 
@@ -81,11 +81,11 @@ public class File {
         this.lastChange = lastChange;
     }
 
-    public User getOwner() {
+    public UserEntity getOwner() {
         return owner;
     }
 
-    public void setOwner(User owner) {
+    public void setOwner(UserEntity owner) {
         this.owner = owner;
     }
 }

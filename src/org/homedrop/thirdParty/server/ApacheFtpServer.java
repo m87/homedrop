@@ -26,7 +26,7 @@ import java.util.*;
 public class ApacheFtpServer implements FtpServer{
     private FtpServerFactory serverFactory;
     private ListenerFactory listenerFactory;
-
+    private org.apache.ftpserver.FtpServer server;
 
     public ApacheFtpServer(){
         serverFactory = new FtpServerFactory();
@@ -73,9 +73,9 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
         try {
             YamlReader reader = new YamlReader(new FileReader(path));
             Object object = reader.read();
-            Map map = (Map)object;
+            Map map = (Map) object;
 
-            listenerFactory.setPort(Integer.parseInt((String)map.get("port")));
+            listenerFactory.setPort(Integer.parseInt((String) map.get("port")));
 
             serverFactory.addListener("default", listenerFactory.createListener());
 
@@ -94,13 +94,13 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    parent.beforeCommand(new Command("a",new String[]{"a"}));
+                    parent.beforeCommand(new Command("a", new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
 
                 @Override
                 public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
-                    parent.afterCommand(new Command("a",new String[]{"a"}));
+                    parent.afterCommand(new Command("a", new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
 
@@ -129,15 +129,20 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
         }
 
     }
-
     @Override
     public void start() {
-        org.apache.ftpserver.FtpServer server = serverFactory.createServer();
+        server = serverFactory.createServer();
         try {
             server.start();
         } catch (FtpException e) {
-            Log.d(LogTag.SERVER, "Server FtpException");
+            Log.d(LogTag.SERVER, "Server FtpException on start");
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void stop() {
+        server.stop();
+        Log.p(LogTag.SERVER, "stopped!");
     }
 }

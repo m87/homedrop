@@ -9,6 +9,10 @@ import java.io.IOException;
 
 /** Main log class */
 public class Log {
+    /** Runtime messages */
+    public static void p(String tag, String content){
+        System.out.println(tag + ": " + content);
+    }
 
     private static void log(String lvl, String tag, String content, String path){
         try {

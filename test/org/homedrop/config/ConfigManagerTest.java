@@ -16,6 +16,7 @@ public class ConfigManagerTest {
         config.loadConfiguration("test-env/homedrop.cfg");
         assertEquals(ConfigManager.ServerType.APACHE.name().toLowerCase(), config.getServerType().toLowerCase());
         assertEquals("./test-env/server.cfg", config.getServerConfigPath());
+        assertEquals("./test-env/db.sql", config.getDbPath());
 
 
         DevicesManager devices = DevicesManager.getInstance();

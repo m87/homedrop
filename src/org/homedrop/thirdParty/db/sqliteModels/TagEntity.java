@@ -4,7 +4,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "tags")
-public class Tag {
+public class TagEntity {
     @DatabaseField(id = true, generatedId = true)
     private long id;
 
@@ -27,5 +27,5 @@ public class Tag {
         this.name = name;
     }
 
-    public Tag(){}
+    public TagEntity(){}
 }

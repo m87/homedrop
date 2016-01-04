@@ -4,7 +4,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "rules")
-public class Rule {
+public class RuleEntity {
     @DatabaseField(id = true, generatedId =  true)
     private long id;
 
@@ -12,7 +12,7 @@ public class Rule {
     private int type;
 
     @DatabaseField(canBeNull = true, foreign = true)
-    private File file;
+    private FileEntity file;
 
     @DatabaseField(canBeNull = false)
     private String body;
@@ -25,7 +25,7 @@ public class Rule {
         this.body = body;
     }
 
-    public void setFile(File file) {
+    public void setFile(FileEntity file) {
         this.file = file;
     }
 
@@ -37,7 +37,7 @@ public class Rule {
         return id;
     }
 
-    public File getFile() {
+    public FileEntity getFile() {
         return file;
     }
 
@@ -48,5 +48,5 @@ public class Rule {
     public String getBody() {
         return body;
     }
-    public Rule(){}
+    public RuleEntity(){}
 }
