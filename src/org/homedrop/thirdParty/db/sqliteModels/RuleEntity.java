@@ -5,7 +5,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "rules")
 public class RuleEntity {
-    @DatabaseField(id = true, generatedId =  true)
+    @DatabaseField(generatedId =  true)
     private long id;
 
     @DatabaseField(canBeNull = false)

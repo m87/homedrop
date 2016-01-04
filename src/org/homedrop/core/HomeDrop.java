@@ -6,6 +6,8 @@ import org.homedrop.Result;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.PluginsManager;
 import org.homedrop.manager.UsersManager;
+import org.homedrop.thirdParty.db.HDDB;
+import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
@@ -20,6 +22,7 @@ import java.util.Map;
 public class HomeDrop implements FtpHandler, Runnable {
     private FtpServer server;
     private ConfigManager config = ConfigManager.getInstance();
+    private HDDB db;
 
     /**
      * Restore session from file
@@ -39,6 +42,9 @@ public class HomeDrop implements FtpHandler, Runnable {
         server = ServerFactory.createServer(config.getServerType());
         server.setUpUsers(UsersManager.getInstance().getUsers().values());
         server.setUp(config.getServerConfigPath(), this);
+
+        db = new SqliteHDDB();
+        db.onCreate();
 
     }
 
@@ -94,9 +100,12 @@ public class HomeDrop implements FtpHandler, Runnable {
                         new BufferedReader(new InputStreamReader(System.in));
 
                 input = br.readLine();
-                if (input.equals("exit")) {
-                    server.stop();
-                    stop = false;
+                switch (input){
+                    case "exit" :{
+                        server.stop();
+                        stop = false;
+                        break;
+                    }
                 }
 
             } catch (IOException io) {

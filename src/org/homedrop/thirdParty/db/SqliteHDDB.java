@@ -9,7 +9,7 @@ import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.manager.ConfigManager;
-import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
+import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -17,6 +17,10 @@ import java.util.List;
 public class SqliteHDDB implements HDDB{
     private ConnectionSource connectionSource;
     private Dao<UserEntity,Long> userDao;
+    private Dao<TagEntity,Long> tagDao;
+    private Dao<FileEntity,Long> fileDao;
+    private Dao<FileTagEntity,Long> fileTagDao;
+    private Dao<RuleEntity,Long> ruleDao;
 
     public SqliteHDDB(){
         try {
@@ -30,6 +34,10 @@ public class SqliteHDDB implements HDDB{
             connectionSource = new JdbcConnectionSource(dbConnectionString);
 
             userDao = DaoManager.createDao(connectionSource, UserEntity.class);
+            fileDao = DaoManager.createDao(connectionSource, FileEntity.class);
+            tagDao = DaoManager.createDao(connectionSource, TagEntity.class);
+            ruleDao = DaoManager.createDao(connectionSource, RuleEntity.class);
+            fileTagDao = DaoManager.createDao(connectionSource, FileTagEntity.class);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -42,7 +50,11 @@ public class SqliteHDDB implements HDDB{
     @Override
     public void onCreate() {
         try {
-            TableUtils.createTable(connectionSource, UserEntity.class);
+            TableUtils.createTableIfNotExists(connectionSource, UserEntity.class);
+            TableUtils.createTableIfNotExists(connectionSource, FileEntity.class);
+            TableUtils.createTableIfNotExists(connectionSource, TagEntity.class);
+            TableUtils.createTableIfNotExists(connectionSource, FileTagEntity.class);
+            TableUtils.createTableIfNotExists(connectionSource, RuleEntity.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }

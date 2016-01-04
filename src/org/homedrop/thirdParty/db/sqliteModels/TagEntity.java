@@ -5,7 +5,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "tags")
 public class TagEntity {
-    @DatabaseField(id = true, generatedId = true)
+    @DatabaseField(generatedId = true)
     private long id;
 
     @DatabaseField(canBeNull = false)

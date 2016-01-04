@@ -1,5 +1,6 @@
 package org.homedrop.thirdParty.db.sqliteModels;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -8,7 +9,7 @@ import java.sql.Date;
 @DatabaseTable(tableName = "files")
 public class FileEntity {
 
-    @DatabaseField(id = true, generatedId = true)
+    @DatabaseField(generatedId = true)
     private long id;
 
     @DatabaseField(canBeNull = false)
@@ -23,7 +24,7 @@ public class FileEntity {
     @DatabaseField(canBeNull = false)
     private long version;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
     private Date lastChange;
 
     @DatabaseField(canBeNull = false, foreign = true)
