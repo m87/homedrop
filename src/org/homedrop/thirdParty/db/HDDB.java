@@ -16,18 +16,21 @@ public interface HDDB {
 
     void addFile(File file);
     void deleteFile(File file);
+    void deleteFileById(long id);
     void editFile(File file);
     List<File> getFilesByName(String name);
     File getFileById(long id);
 
     void addUser(User user);
     void deleteUser(User user);
+    void deleteUserById(long id);
     void editUser(User user);
     User getUserByName(String name); //unique
     User getUserById(long id);
 
     void addTag(Tag tag);
     void deleteTag(Tag tag);
+    void deleteTagById(long id);
     void editTag(Tag tag);
     Tag getTagByName(String name); //unique
     Tag getTagById(long id);

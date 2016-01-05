@@ -132,13 +132,7 @@ public class SqliteHDDB implements HDDB{
 
     @Override
     public void deleteUser(User user) {
-        try {
-           userDao.deleteById(user.getId());
-           Log.i(LogTag.DB, "User entity deleted ::"+user.getLogin());
-        } catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [User deletion :: "+user.getLogin()+" ]");
-            e.printStackTrace();
-        }
+        deleteUserById(user.getId());
     }
 
     @Override
@@ -154,6 +148,17 @@ public class SqliteHDDB implements HDDB{
     @Override
     public User getUserById(long id) {
         return null;
+    }
+
+    @Override
+    public void deleteUserById(long id) {
+        try {
+            userDao.deleteById(id);
+           Log.i(LogTag.DB, "User entity deleted ::" + id);
+        } catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [User deletion :: "+id+" ]");
+            e.printStackTrace();
+        }
     }
 
     @Override

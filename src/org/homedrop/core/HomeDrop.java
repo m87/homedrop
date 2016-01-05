@@ -46,7 +46,6 @@ public class HomeDrop implements FtpHandler, Runnable {
 
         db = new SqliteHDDB();
         db.onCreate();
-
     }
 
     @Override
