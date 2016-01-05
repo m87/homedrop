@@ -125,13 +125,20 @@ public class SqliteHDDB implements HDDB{
                Log.w(LogTag.DB, "User entity not created ::"+user.getLogin());
            }
         } catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [User creation :: "+user.getLogin()+" ]");
             e.printStackTrace();
         }
     }
 
     @Override
     public void deleteUser(User user) {
-
+        try {
+           userDao.deleteById(user.getId());
+           Log.i(LogTag.DB, "User entity deleted ::"+user.getLogin());
+        } catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [User deletion :: "+user.getLogin()+" ]");
+            e.printStackTrace();
+        }
     }
 
     @Override
