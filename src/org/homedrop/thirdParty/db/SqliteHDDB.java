@@ -95,6 +95,11 @@ public class SqliteHDDB implements HDDB{
     }
 
     @Override
+    public void deleteFileById(long id) {
+
+    }
+
+    @Override
     public void editFile(File file) {
 
     }
@@ -168,6 +173,11 @@ public class SqliteHDDB implements HDDB{
 
     @Override
     public void deleteTag(Tag tag) {
+
+    }
+
+    @Override
+    public void deleteTagById(long id) {
 
     }
 
