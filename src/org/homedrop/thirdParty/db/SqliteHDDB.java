@@ -6,6 +6,7 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.File;
+import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.manager.ConfigManager;
@@ -71,6 +72,16 @@ public class SqliteHDDB implements HDDB{
     }
 
     @Override
+    public List<User> getAllUsers() {
+        return null;
+    }
+
+    @Override
+    public List<Rule> getAllRules() {
+        return null;
+    }
+
+    @Override
     public List<File> getAllFiles() {
         return null;
     }
@@ -91,6 +102,16 @@ public class SqliteHDDB implements HDDB{
     }
 
     @Override
+    public List<File> getFilesByName(String name) {
+        return null;
+    }
+
+    @Override
+    public File getFileById(long id) {
+        return null;
+    }
+
+    @Override
     public void addUser(User user) {
 
     }
@@ -103,6 +124,16 @@ public class SqliteHDDB implements HDDB{
     @Override
     public void editUser(User user) {
 
+    }
+
+    @Override
+    public User getUserByName(String name) {
+        return null;
+    }
+
+    @Override
+    public User getUserById(long id) {
+        return null;
     }
 
     @Override
@@ -121,6 +152,16 @@ public class SqliteHDDB implements HDDB{
     }
 
     @Override
+    public Tag getTagByName(String name) {
+        return null;
+    }
+
+    @Override
+    public Tag getTagById(long id) {
+        return null;
+    }
+
+    @Override
     public void assignTag(File file, Tag tag) {
 
     }
@@ -128,5 +169,25 @@ public class SqliteHDDB implements HDDB{
     @Override
     public void unassignTag(File file, Tag tag) {
 
+    }
+
+    @Override
+    public List<Tag> getTags(File file) {
+        return null;
+    }
+
+    @Override
+    public List<Tag> getTags(long id) {
+        return null;
+    }
+
+    @Override
+    public List<File> getFilesByTag(Tag tag) {
+        return null;
+    }
+
+    @Override
+    public List<File> getFilesByTag(long id) {
+        return null;
     }
 }
