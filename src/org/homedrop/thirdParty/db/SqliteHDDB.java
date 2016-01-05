@@ -9,6 +9,8 @@ import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
+import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
@@ -81,10 +83,6 @@ public class SqliteHDDB implements HDDB{
         return null;
     }
 
-    @Override
-    public List<File> getAllFiles() {
-        return null;
-    }
 
     @Override
     public void addFile(File file) {
@@ -113,7 +111,22 @@ public class SqliteHDDB implements HDDB{
 
     @Override
     public void addUser(User user) {
+        UserEntity entity = new UserEntity();
+        entity.setName(user.getLogin());
+        entity.setPassword(user.getPassowrd());
+        entity.setHome(user.getHome());
 
+        try {
+           if(1 == userDao.create(entity)){
+               user.setId(entity.getId());
+               Log.i(LogTag.DB, "User entity created ::"+user.getLogin());
+           }else{
+               user.setId(-1);
+               Log.w(LogTag.DB, "User entity not created ::"+user.getLogin());
+           }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

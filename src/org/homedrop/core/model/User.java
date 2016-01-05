@@ -1,10 +1,10 @@
 package org.homedrop.core.model;
 
 public class User {
-    private static int ID = 0;
+    private static long ID = 0;
     private String login, passowrd;
     private String home;
-    private int id;
+    private long id;
     public User(String login, String passowrd, String home){
         this.id = ID++;
         this.login = login;
@@ -24,7 +24,11 @@ public class User {
         return home;
     }
 
-    public int getId() {
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId() {
         return id;
     }
 }

@@ -6,4 +6,5 @@ public class LogTag {
     public static final String CONFIG = "[CONFIG]";
     public static final String SERVER = "[SERVER]";
     public static final String HOMEDROP = "[HOMEDROP]";
+    public static final String DB = "[DataBase]";
 }

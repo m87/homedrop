@@ -10,9 +10,9 @@ import java.util.TreeMap;
 
 public class UsersManager implements LifeCycle{
     private static UsersManager ourInstance = new UsersManager();
-    Map<Integer, User> users ;
+    Map<Long, User> users ;
 
-    public Map<Integer, User> getUsers() {
+    public Map<Long, User> getUsers() {
         return users;
     }
 
@@ -20,7 +20,7 @@ public class UsersManager implements LifeCycle{
         return ourInstance;
     }
 
-    public void addUser(Integer id, User user){
+    public void addUser(Long id, User user){
         for(User u : users.values()){
             if(u.getId() == user.getId()) continue;
             if(user.getHome().equals(u.getHome())) {
