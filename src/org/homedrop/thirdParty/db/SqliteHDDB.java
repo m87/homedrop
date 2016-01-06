@@ -118,7 +118,7 @@ public class SqliteHDDB implements HDDB{
     public void addUser(User user) {
         UserEntity entity = new UserEntity();
         entity.setName(user.getLogin());
-        entity.setPassword(user.getPassowrd());
+        entity.setPassword(user.getPassword());
         entity.setHome(user.getHome());
 
         try {

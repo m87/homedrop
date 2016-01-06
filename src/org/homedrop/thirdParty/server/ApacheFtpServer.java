@@ -4,7 +4,6 @@ import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.*;
-import org.apache.ftpserver.ftplet.User;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.PasswordEncryptor;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
@@ -12,7 +11,6 @@ import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.Command;
 import org.homedrop.core.HomeDrop;
-import org.homedrop.core.model.*;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
@@ -53,7 +51,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
         for(org.homedrop.core.model.User u : users) {
             BaseUser user = new BaseUser();
             user.setName(u.getLogin());
-            user.setPassword(u.getPassowrd());
+            user.setPassword(u.getPassword());
             user.setHomeDirectory(u.getHome());
             List<Authority> authorities = new ArrayList<Authority>();
             authorities.add(new WritePermission());
