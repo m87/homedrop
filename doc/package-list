@@ -1,0 +1,13 @@
+
+org.homedrop
+org.homedrop.config
+org.homedrop.core
+org.homedrop.core.model
+org.homedrop.core.model.device
+org.homedrop.core.utils
+org.homedrop.manager
+org.homedrop.plugin
+org.homedrop.thirdParty.com
+org.homedrop.thirdParty.db
+org.homedrop.thirdParty.db.sqliteModels
+org.homedrop.thirdParty.server
