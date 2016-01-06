@@ -2,13 +2,13 @@ package org.homedrop.core.model;
 
 public class User {
     private static long ID = 0;
-    private String login, passowrd;
+    private String login, password;
     private String home;
     private long id;
     public User(String login, String passowrd, String home){
         this.id = ID++;
         this.login = login;
-        this.passowrd = passowrd;
+        this.password = passowrd;
         this.home = home;
     }
 
@@ -16,8 +16,8 @@ public class User {
         return login;
     }
 
-    public String getPassowrd() {
-        return passowrd;
+    public String getPassword() {
+        return password;
     }
 
     public String getHome() {
