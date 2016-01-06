@@ -7,9 +7,18 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/** Main log class */
+/**
+ * log4j wrapper
+ * @see LogTag
+ */
 public class Log {
-    /** Runtime messages */
+    /**
+     * Runtime message
+     *
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void p(String tag, String content){
         System.out.println(tag + ": " + content);
     }
@@ -23,35 +32,66 @@ public class Log {
         }
     }
 
-    /** Debug message in custom log file */
+    /**
+     * Debug log level. For critical errors only!
+     * @param tag Log tag
+     * @param content message
+     * @param file custom log file
+     * @see LogTag
+     */
     public static void d(String tag, String content, String file){
         log("[DEBUG]",tag,content,file);
     }
-    /** Debug message in default log file */
+    /**
+     * Debug log level. For critical errors only! [Default location]
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void d(String tag, String content){
         log("[DEBUG]",tag,content,Default.LOGFILE);
     }
 
 
 
-    /** Warning message in custom log file */
+    /**
+     * Warning log level. For non critical errors i.e. Unsuccessful user creation.
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void w(String tag, String content, String file){
 
         log("[WARNING]",tag,content,file);
     }
-    /** Warning message in default log file */
+    /**
+     * Warning log level. For non critical errors i.e. Unsuccessful user creation. [Default location]
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void w(String tag, String content){
         log("[WARNING]",tag,content,Default.LOGFILE);
 
     }
 
 
-    /** Info message in custom log file */
+     /**
+     * Info log level. For additional information and easier debugging.
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void i(String tag, String content, String file){
         log("[INFO]",tag,content,file);
 
     }
-    /** Info message in default log file */
+    /**
+     * Info log level. For additional information and easier debugging. [Default location]
+     * @param tag Log tag
+     * @param content message
+     * @see LogTag
+     */
     public static void i(String tag, String content){
         log("[INFO]",tag,content,Default.LOGFILE);
 
