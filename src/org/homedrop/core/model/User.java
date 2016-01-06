@@ -5,10 +5,10 @@ public class User {
     private String login, password;
     private String home;
     private long id;
-    public User(String login, String passowrd, String home){
+    public User(String login, String password, String home){
         this.id = ID++;
         this.login = login;
-        this.password = passowrd;
+        this.password = password;
         this.home = home;
     }
 

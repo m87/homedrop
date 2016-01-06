@@ -25,17 +25,14 @@ public class SqliteHDDB implements HDDB{
     private Dao<FileTagEntity,Long> fileTagDao;
     private Dao<RuleEntity,Long> ruleDao;
 
-    public SqliteHDDB(){
+    public SqliteHDDB(JdbcConnectionSource connectionSource){
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-
-        String dbConnectionString = "jdbc:sqlite:"+ ConfigManager.getInstance().getDbPath();
+        this.connectionSource = connectionSource;
         try {
-            connectionSource = new JdbcConnectionSource(dbConnectionString);
-
             userDao = DaoManager.createDao(connectionSource, UserEntity.class);
             fileDao = DaoManager.createDao(connectionSource, FileEntity.class);
             tagDao = DaoManager.createDao(connectionSource, TagEntity.class);
@@ -45,9 +42,6 @@ public class SqliteHDDB implements HDDB{
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
-
     }
 
     @Override

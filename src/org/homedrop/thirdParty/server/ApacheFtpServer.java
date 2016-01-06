@@ -26,10 +26,9 @@ public class ApacheFtpServer implements FtpServer{
     private ListenerFactory listenerFactory;
     private org.apache.ftpserver.FtpServer server;
 
-    public ApacheFtpServer(){
-        serverFactory = new FtpServerFactory();
-        listenerFactory = new ListenerFactory();
-
+    public ApacheFtpServer(FtpServerFactory serverFactory, ListenerFactory listenerFactory) {
+        this.serverFactory = serverFactory;
+        this.listenerFactory = listenerFactory;
     }
 
     @Override

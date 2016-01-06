@@ -8,6 +8,7 @@ import org.homedrop.core.model.device.Device;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.thirdParty.db.HDDB;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -35,6 +36,7 @@ public class ConfigManager implements LifeCycle{
     public void onExit() {
 
     }
+
 
     /** Available servers */
     public enum ServerType{APACHE}
@@ -88,6 +90,8 @@ public class ConfigManager implements LifeCycle{
 
             this.dbPath = (String)map.get("db");
 
+            dbDriverName = (String)map.get("db-driver");
+
 
         } catch (FileNotFoundException e) {
             Log.d(LogTag.CONFIG, "File not found");
@@ -107,9 +111,14 @@ public class ConfigManager implements LifeCycle{
     }
 
     private String dbPath;
-
     public String getDbPath() {
         return dbPath;
+    }
+
+    private String dbDriverName;
+
+    public String getDbDriverName() {
+        return dbDriverName;
     }
 
     private String serverConfigPath;
