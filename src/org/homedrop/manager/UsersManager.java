@@ -24,11 +24,11 @@ public class UsersManager implements LifeCycle{
         for(User u : users.values()){
             if(u.getId() == user.getId()) continue;
             if(user.getHome().equals(u.getHome())) {
-                Log.w(LogTag.CONFIG, "Same home folder: " +user.getLogin() + " and " + u.getLogin() );
+                Log.w(LogTag.CONFIG, "Same home folder: " +user.getName() + " and " + u.getName() );
                 return;
             }
-            if(user.getLogin().equals(u.getLogin())) {
-                Log.w(LogTag.CONFIG, "Same login: " +user.getLogin() + " and " + u.getLogin() );
+            if(user.getName().equals(u.getName())) {
+                Log.w(LogTag.CONFIG, "Same login: " +user.getName() + " and " + u.getName() );
                 return;
             }
         }

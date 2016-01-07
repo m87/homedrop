@@ -5,12 +5,14 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.User;
+import org.homedrop.core.utils.ModelHelpers;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.DependencyProvider;
 import org.homedrop.testUtils.TestHelpers;
 import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -21,18 +23,23 @@ import static org.junit.Assert.*;
 
 public class SqliteHDDBTest {
 
-    DependencyProvider dependencyProvider;
-    SqliteHDDB sqliteHDDB;
-    JdbcConnectionSource connectionSource;
+    static DependencyProvider dependencyProvider;
+    static SqliteHDDB sqliteHDDB;
+    static JdbcConnectionSource connectionSource;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    static public void setUpTest() throws Exception {
         ConfigManager config = ConfigManager.getInstance();
         config.loadConfiguration("test-env/homedrop.cfg");
         dependencyProvider = DependencyProvider.getInstance();
         dependencyProvider.setConfig(config);
         connectionSource = dependencyProvider.getDbConnectionSource();
         sqliteHDDB = new SqliteHDDB(connectionSource);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+
     }
 
     @Test
@@ -54,11 +61,49 @@ public class SqliteHDDBTest {
             Throwable causeException = e.getCause();
             assertThat(causeException, instanceOf(TestHelpers.HelperException.class));
         }
+    }
+
+    @Test
+    public void testGetAllUsers() throws Exception {
+    }
+
+    @Test
+    public void testGetAllRules() throws Exception {
 
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Test
+    public void testAddFile() throws Exception {
 
+    }
+
+    @Test
+    public void testDeleteFile() throws Exception {
+
+    }
+
+    @Test
+    public void testDeleteFileById() throws Exception {
+
+    }
+
+    @Test
+    public void testAddUser() throws Exception {
+        User[] users = {
+                new UserEntity(),
+                new UserEntity()
+        };
+        ModelHelpers.setUserFields(users[0], "testuser", "pass", "testuser_home");
+        ModelHelpers.setUserFields(users[1], "testuser2", "pass2", "home_testuser2");
+        for (User user : users) {
+            sqliteHDDB.addUser(user);
+        }
+
+        for (User expectedUser : users) {
+            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
+            TestHelpers.assertUsersAreEqual(expectedUser, actualUser);
+        }
+
+        TableUtils.clearTable(connectionSource, UserEntity.class);
     }
 }

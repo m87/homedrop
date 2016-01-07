@@ -2,9 +2,10 @@ package org.homedrop.thirdParty.db.sqliteModels;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import org.homedrop.core.model.User;
 
 @DatabaseTable(tableName = "users")
-public class UserEntity {
+public class UserEntity implements User {
 
     @DatabaseField(generatedId = true)
     private long id;
@@ -21,10 +22,12 @@ public class UserEntity {
     public UserEntity(){
     }
 
+    @Override
     public void setHome(String home) {
         this.home = home;
     }
 
+    @Override
     public String getHome() {
         return home;
     }
@@ -33,22 +36,27 @@ public class UserEntity {
         this.name = name;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public long getId() {
         return id;
     }
 
+    @Override
     public void setId(long id) {
         this.id = id;
     }
 
+    @Override
     public void setPassword(String password) {
         this.password = password;
     }
 
+    @Override
     public String getPassword() {
         return password;
     }

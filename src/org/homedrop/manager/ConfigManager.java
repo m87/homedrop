@@ -9,7 +9,9 @@ import org.homedrop.core.model.device.Device;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.core.utils.ModelHelpers;
 import org.homedrop.thirdParty.db.HDDB;
+import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -75,7 +77,8 @@ public class ConfigManager implements LifeCycle{
             Map<String, Map> usersMap = (Map)usersObject;
 
             for(String m : usersMap.keySet()){
-                User u = new User(m,(String)usersMap.get(m).get("pass"), (String)usersMap.get(m).get("home"));
+                User u = new UserEntity();
+                ModelHelpers.setUserFields(u, m,(String)usersMap.get(m).get("pass"), (String)usersMap.get(m).get("home"));
                 UsersManager.getInstance().addUser(u.getId(),u);
             }
             Map<String, String> pluginsMap = (Map)map.get("plugins");

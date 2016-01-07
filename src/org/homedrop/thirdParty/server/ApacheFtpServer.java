@@ -11,6 +11,8 @@ import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.Command;
 import org.homedrop.core.HomeDrop;
+import org.homedrop.core.model.*;
+import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 
@@ -32,7 +34,7 @@ public class ApacheFtpServer implements FtpServer{
     }
 
     @Override
-    public void setUpUsers(Collection<org.homedrop.core.model.User> users) {
+    public void setUpUsers(Collection<User> users) {
 PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFactory();
             userManagerFactory.setFile(new File("/home/rt/users.props"));
             userManagerFactory.setPasswordEncryptor(new PasswordEncryptor() {
@@ -47,9 +49,9 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
                 }
             });
         UserManager um = userManagerFactory.createUserManager();
-        for(org.homedrop.core.model.User u : users) {
+        for(User u : users) {
             BaseUser user = new BaseUser();
-            user.setName(u.getLogin());
+            user.setName(u.getName());
             user.setPassword(u.getPassword());
             user.setHomeDirectory(u.getHome());
             List<Authority> authorities = new ArrayList<Authority>();
