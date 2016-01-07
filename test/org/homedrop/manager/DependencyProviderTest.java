@@ -1,6 +1,8 @@
 package org.homedrop.manager;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.listener.ListenerFactory;
 import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.junit.After;
@@ -42,5 +44,17 @@ public class DependencyProviderTest {
         HDDB db = ctor.newInstance(new Object[] {connectionSource});
         assertThat(db, instanceOf(SqliteHDDB.class));
 
+    }
+
+    @Test
+    public void testGetServerFactory() throws Exception {
+        FtpServerFactory serverFactory =  dependencyProvider.getServerFactory();
+        assertThat(serverFactory, instanceOf(FtpServerFactory.class));
+    }
+
+    @Test
+    public void testGetListenerFactory() throws Exception {
+        ListenerFactory listenerFactory = dependencyProvider.getListenerFactory();
+        assertThat(listenerFactory, instanceOf(ListenerFactory.class));
     }
 }

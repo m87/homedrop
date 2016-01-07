@@ -12,7 +12,7 @@ public class ConfigManagerTest {
 
 
     @Test
-    public void loadTest(){
+    public void testLoad(){
         ConfigManager config = ConfigManager.getInstance();
         config.loadConfiguration(TestHelpers.MainConfigFilePath);
         assertEquals(ConfigManager.ServerType.APACHE.name().toLowerCase(), config.getServerType().toLowerCase());
@@ -26,9 +26,8 @@ public class ConfigManagerTest {
         assertEquals("/dev/sda111", devices.getDevice().getDev());
         assertEquals("/home/homedrop/db1", devices.getDevice().getMount());
 
-        // TODO: fix plugin case
-        /*PluginsManager plugins  = PluginsManager.getInstance();
-        assertNotNull(plugins.getPlugins().get("PrintPlugin"));*/
+        PluginsManager plugins  = PluginsManager.getInstance();
+        assertNotNull(plugins.getPlugins().get("PrintPlugin"));
 
 
     }

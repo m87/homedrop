@@ -11,7 +11,6 @@ import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.manager.ConfigManager;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;

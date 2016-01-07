@@ -2,6 +2,7 @@ package org.homedrop.manager;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.Default;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.device.Device;
@@ -55,6 +56,7 @@ public class ConfigManager implements LifeCycle{
      */
     public void loadConfiguration(String rootPath){
         try {
+            BasicConfigurator.configure();
             YamlReader reader = new YamlReader(new FileReader(rootPath));
             Object object = reader.read();
             Map map = (Map)object;
