@@ -106,6 +106,47 @@ public class SqliteHDDBTest {
 
     @Test
     public void testAddUser() throws Exception {
+        User[] users = prepareUsersForTest();
+
+        for (User expectedUser : users) {
+            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
+            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
+        }
+    }
+
+    @Test
+    public void testAddUserWhenUserAlreadyExists() {
+        User[] users = prepareUsersForTest();
+        sqliteHDDB.addUser(users[0]);
+        for (User u : sqliteHDDB.getAllUsers()) {
+            System.out.println(u.getName() + " " + u.getId());
+        }
+        assertEquals(SqliteHDDB.IdNotCreated, users[0].getId());
+    }
+
+    @Test
+    public void testDeleteUser() throws Exception {
+        User[] users = prepareUsersForTest();
+
+
+    }
+
+    @Test
+    public void testEditUser() throws Exception {
+
+    }
+
+    @Test
+    public void testGetUserByName() throws Exception {
+
+    }
+
+    @Test
+    public void testGetUserById() throws Exception {
+
+    }
+
+    public User[] prepareUsersForTest() {
         User[] users = {
                 new UserEntity(),
                 new UserEntity()
@@ -115,11 +156,6 @@ public class SqliteHDDBTest {
         for (User user : users) {
             sqliteHDDB.addUser(user);
         }
-
-        for (User expectedUser : users) {
-            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
-            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
-        }
-
+        return users;
     }
 }

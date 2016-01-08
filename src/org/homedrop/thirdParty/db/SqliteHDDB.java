@@ -9,8 +9,10 @@ import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
+import org.homedrop.core.model.device.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.core.utils.ModelHelpers;
 import org.homedrop.manager.UsersManager;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 import sun.awt.SunHints;
@@ -19,6 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class SqliteHDDB implements HDDB {
+    public static final long IdNotCreated = -1;
     private ConnectionSource connectionSource;
     private Dao<UserEntity,Long> userDao;
     private Dao<TagEntity,Long> tagDao;
@@ -123,23 +126,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void addUser(User user) {
-        UserEntity entity = new UserEntity();
-        entity.setName(user.getName());
-        entity.setPassword(user.getPassword());
-        entity.setHome(user.getHome());
-
-        try {
-           if(1 == userDao.create(entity)){
-               user.setId(entity.getId());
-               Log.i(LogTag.DB, "User entity created ::"+user.getName());
-           }else{
-               user.setId(-1);
-               Log.w(LogTag.DB, "User entity not created ::"+user.getName());
-           }
-        } catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [User creation :: "+user.getName()+" ]");
-            e.printStackTrace();
-        }
+        UserEntity userAsEntity = (UserEntity) user;
+        createWithDao(userDao, userAsEntity, "User", user.getName());
     }
 
     @Override
@@ -232,6 +220,20 @@ public class SqliteHDDB implements HDDB {
     @Override
     public List<File> getFilesByTag(long id) {
         return null;
+    }
+
+    private static <T extends Identifiable> void createWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
+        try {
+            if(1 == dao.create(entity)){
+                Log.i(LogTag.DB, entityName + " entity created ::"+expressiveValue);
+            }else{
+                entity.setId(IdNotCreated);
+                Log.w(LogTag.DB, entityName + "entity not created ::" + expressiveValue);
+            }
+        } catch (SQLException e) {
+            entity.setId(IdNotCreated);
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " creation :: "+ expressiveValue +" ]");
+        }
     }
 
     private static <T> T getByIdFromDao(Dao <T, Long> dao, long id) {

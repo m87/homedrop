@@ -1,14 +1,12 @@
 package org.homedrop.core.model;
 
-public interface User {
+import org.homedrop.core.model.device.Identifiable;
 
-    String getName();
-    void setName(String name);
-    String getPassword();
-    void setPassword(String password);
-    String getHome();
-    void setHome(String home);
-
-    void setId(long id);
-    long getId();
+public abstract class User implements Identifiable {
+    public abstract String getName();
+    public abstract void setName(String name);
+    public abstract String getPassword();
+    public abstract void setPassword(String password);
+    public abstract String getHome();
+    public abstract void setHome(String home);
 }

@@ -5,12 +5,12 @@ import com.j256.ormlite.table.DatabaseTable;
 import org.homedrop.core.model.User;
 
 @DatabaseTable(tableName = "users")
-public class UserEntity implements User {
+public class UserEntity extends User {
 
     @DatabaseField(generatedId = true)
     private long id;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, unique = true)
     private String name;
 
     @DatabaseField(canBeNull = false)
@@ -22,12 +22,10 @@ public class UserEntity implements User {
     public UserEntity(){
     }
 
-    @Override
     public void setHome(String home) {
         this.home = home;
     }
 
-    @Override
     public String getHome() {
         return home;
     }
@@ -36,7 +34,6 @@ public class UserEntity implements User {
         this.name = name;
     }
 
-    @Override
     public String getName() {
         return name;
     }
@@ -51,12 +48,10 @@ public class UserEntity implements User {
         this.id = id;
     }
 
-    @Override
     public void setPassword(String password) {
         this.password = password;
     }
 
-    @Override
     public String getPassword() {
         return password;
     }
