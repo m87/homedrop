@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.mockito.Mockito.*;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -125,11 +126,28 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testDeleteUser() throws Exception {
+    public void testDeleteUserById() {
         User[] users = prepareUsersForTest();
 
+        sqliteHDDB.deleteUserById(users[0].getId());
 
+        List<User> allUsers = sqliteHDDB.getAllUsers();
+        assertEquals(1, allUsers.size());
+        TestHelpers.assertListContainsItemEqual(allUsers, users[1]);
     }
+
+    @Test
+    public void testDeleteUser() throws Exception {
+        User[] users = prepareUsersForTest();
+        HDDB sqliteHDDBMock = mock(SqliteHDDB.class);
+
+        sqliteHDDBMock.deleteUser(users[0]);
+
+        verify(sqliteHDDBMock, times(1)).deleteUser(users[0]);
+        verifyNoMoreInteractions(sqliteHDDBMock);
+    }
+
+
 
     @Test
     public void testEditUser() throws Exception {
