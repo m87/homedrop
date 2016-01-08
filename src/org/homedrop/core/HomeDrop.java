@@ -75,6 +75,12 @@ public class HomeDrop implements FtpHandler, Runnable {
 
     @Override
     public Result beforeCommand(Command command) {
+        Map<String, Plugin> map = PluginsManager.getInstance().getPlugins();
+        for (String p : map.keySet()) {
+            System.out.print("[" + map.get(p) + "]: ");
+            map.get(p).handleCommand(command.getName(), null);
+
+        }
         return null;
     }
 
@@ -85,11 +91,7 @@ public class HomeDrop implements FtpHandler, Runnable {
 
     @Override
     public Result onConnect() {
-        Map<String, Plugin> map = PluginsManager.getInstance().getPlugins();
-        for (String p : map.keySet()) {
-            System.out.print("[" + map.get(p) + "]: ");
-            map.get(p).handleCommand("aaa", null);
-        }
+
         return null;
     }
 

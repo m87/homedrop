@@ -93,7 +93,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    parent.beforeCommand(new Command("a", new String[]{"a"}));
+                    parent.beforeCommand(new Command(ftpRequest.getCommand(), new String[]{"a"}));
                     return FtpletResult.DEFAULT;
                 }
 

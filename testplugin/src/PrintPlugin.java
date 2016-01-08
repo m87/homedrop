@@ -7,7 +7,7 @@ import java.util.List;
 public class PrintPlugin implements Plugin{
     @Override
     public Result handleCommand(String cmd, String[] args) {
-        System.out.println(cmd);
+        System.out.println(cmd+" ");
         return null;
     }
 
