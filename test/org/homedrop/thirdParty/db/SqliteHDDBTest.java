@@ -2,7 +2,6 @@ package org.homedrop.thirdParty.db;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.ModelHelpers;
@@ -11,7 +10,6 @@ import org.homedrop.manager.DependencyProvider;
 import org.homedrop.testUtils.TestHelpers;
 import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -118,11 +116,10 @@ public class SqliteHDDBTest {
     @Test
     public void testAddUserWhenUserAlreadyExists() {
         User[] users = prepareUsersForTest();
+
         sqliteHDDB.addUser(users[0]);
-        for (User u : sqliteHDDB.getAllUsers()) {
-            System.out.println(u.getName() + " " + u.getId());
-        }
-        assertEquals(SqliteHDDB.IdNotCreated, users[0].getId());
+
+        assertEquals(SqliteHDDB.IdFailed, users[0].getId());
     }
 
     @Test
@@ -147,11 +144,29 @@ public class SqliteHDDBTest {
         verifyNoMoreInteractions(sqliteHDDBMock);
     }
 
+    @Test
+    public void testUpdateUser() throws Exception {
+        User[] users = prepareUsersForTest();
+        String expectedName = "newName";
+        users[0].setName(expectedName);
 
+        sqliteHDDB.updateUser(users[0]);
+
+        for (User expectedUser : users) {
+            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
+            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
+        }
+    }
 
     @Test
-    public void testEditUser() throws Exception {
+    public void testUpdateUserWhenUserDoesNotExist() throws Exception {
+        User[] users = prepareUsersForTest();
+        User notExistingUser = new UserEntity();
+        ModelHelpers.setUserFields(notExistingUser, "foo", "foo", "foo");
+        notExistingUser.setId(999);
 
+        sqliteHDDB.updateUser(notExistingUser);
+        assertEquals(SqliteHDDB.IdFailed, notExistingUser.getId());
     }
 
     @Test

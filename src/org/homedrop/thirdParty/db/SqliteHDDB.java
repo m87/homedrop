@@ -12,16 +12,13 @@ import org.homedrop.core.model.User;
 import org.homedrop.core.model.device.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.ModelHelpers;
-import org.homedrop.manager.UsersManager;
 import org.homedrop.thirdParty.db.sqliteModels.*;
-import sun.awt.SunHints;
 
 import java.sql.SQLException;
 import java.util.List;
 
 public class SqliteHDDB implements HDDB {
-    public static final long IdNotCreated = -1;
+    public static final long IdFailed = -1;
     private ConnectionSource connectionSource;
     private Dao<UserEntity,Long> userDao;
     private Dao<TagEntity,Long> tagDao;
@@ -110,7 +107,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editFile(File file) {
+    public void updateFile(File file) {
 
     }
 
@@ -136,8 +133,9 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editUser(User user) {
-
+    public void updateUser(User user) {
+        UserEntity userAsEntity = (UserEntity) user;
+        updateWithDao(userDao, userAsEntity, "User", user.getName());
     }
 
     @Override
@@ -172,7 +170,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editTag(Tag tag) {
+    public void updateTag(Tag tag) {
 
     }
 
@@ -221,11 +219,11 @@ public class SqliteHDDB implements HDDB {
             if(1 == dao.create(entity)){
                 Log.i(LogTag.DB, entityName + " entity created ::"+expressiveValue);
             }else{
-                entity.setId(IdNotCreated);
+                entity.setId(IdFailed);
                 Log.w(LogTag.DB, entityName + "entity not created ::" + expressiveValue);
             }
         } catch (SQLException e) {
-            entity.setId(IdNotCreated);
+            entity.setId(IdFailed);
             Log.d(LogTag.DB, "Sql error! [" + entityName + " creation :: "+ expressiveValue +" ]");
         }
     }
@@ -240,6 +238,20 @@ public class SqliteHDDB implements HDDB {
             e.printStackTrace();
         }
         return item;
+    }
+
+    private static <T extends Identifiable> void updateWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
+        try {
+            if(1 == dao.update(entity)){
+                Log.i(LogTag.DB, entityName + " entity updated ::"+expressiveValue);
+            }else{
+                entity.setId(IdFailed);
+                Log.w(LogTag.DB, entityName + "entity not updated ::" + expressiveValue);
+            }
+        } catch (SQLException e) {
+            entity.setId(IdFailed);
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " update :: "+ expressiveValue +" ]");
+        }
     }
 
     private void deleteByIdFromDao(Dao dao, long id, String entityName) {
