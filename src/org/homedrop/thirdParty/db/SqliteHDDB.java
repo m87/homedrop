@@ -70,7 +70,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<User> getAllUsers() {
-        return null;
+        List allUsers = getAllFromDao(userDao);
+        return allUsers;
     }
 
     @Override
@@ -78,6 +79,17 @@ public class SqliteHDDB implements HDDB {
         return null;
     }
 
+    private static <T> List<T> getAllFromDao(Dao <T, Long> dao) {
+        List<T> allItems = null;
+        try {
+            allItems = dao.queryForAll();
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get item]");
+            e.printStackTrace();
+        }
+        return allItems;
+    }
 
     @Override
     public void addFile(File file) {

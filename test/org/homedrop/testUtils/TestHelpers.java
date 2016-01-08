@@ -1,6 +1,9 @@
 package org.homedrop.testUtils;
 
 import org.homedrop.core.model.User;
+import org.homedrop.core.utils.ModelHelpers;
+
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -12,14 +15,18 @@ public class TestHelpers {
 
     public static final String MainConfigFilePath = "test-env/homedrop.cfg";
 
-    public static void assertUsersAreEqual(User expected, User actual) {
-        String expectedName =  expected.getName();
-        String expectedPassword =  expected.getPassword();
-        String expectedHome =  expected.getHome();
-        long expectedId = expected.getId();
-        assertEquals(expectedName, actual.getName());
-        assertEquals(expectedPassword, actual.getPassword());
-        assertEquals(expectedHome, actual.getHome());
-        assertEquals(expectedId, actual.getId());
+    public static <T> void assertListContainsItemEqual(List<T> list, T itemSearched) {
+        boolean foundEqual = false;
+        for (T item : list) {
+            foundEqual |= areItemsEqual(itemSearched, item);
+        }
+        assertTrue(foundEqual);
+    }
+
+    public static <T> boolean areItemsEqual(T itemSearched, T itemWithinList) {
+        if (itemSearched instanceof User) {
+            return ModelHelpers.areFieldsEqual((User)itemSearched, (User)itemWithinList);
+        }
+        return false;
     }
 }

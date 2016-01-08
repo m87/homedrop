@@ -17,6 +17,7 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.*;
@@ -39,7 +40,7 @@ public class SqliteHDDBTest {
 
     @After
     public void tearDown() throws Exception {
-
+        TableUtils.clearTable(connectionSource, UserEntity.class);
     }
 
     @Test
@@ -65,6 +66,22 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllUsers() throws Exception {
+        User[] users = {
+                new UserEntity(),
+                new UserEntity()
+        };
+        ModelHelpers.setUserFields(users[0], "testuser", "pass", "testuser_home");
+        ModelHelpers.setUserFields(users[1], "testuser2", "pass2", "home_testuser2");
+        for (User user : users) {
+            sqliteHDDB.addUser(user);
+        }
+
+        List<User> allUsers = sqliteHDDB.getAllUsers();
+
+        assertEquals(allUsers.size(), users.length);
+        for (User expectedUser : users) {
+            TestHelpers.assertListContainsItemEqual(allUsers, expectedUser);
+        }
     }
 
     @Test
@@ -101,9 +118,8 @@ public class SqliteHDDBTest {
 
         for (User expectedUser : users) {
             User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
-            TestHelpers.assertUsersAreEqual(expectedUser, actualUser);
+            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
         }
 
-        TableUtils.clearTable(connectionSource, UserEntity.class);
     }
 }
