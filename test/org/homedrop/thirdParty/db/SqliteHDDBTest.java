@@ -171,12 +171,20 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetUserByName() throws Exception {
+        User[] users = prepareUsersForTest();
 
+        for (User expectedUser : users) {
+            User actualUser = sqliteHDDB.getUserByName(expectedUser.getName());
+            TestHelpers.areItemsEqual(expectedUser, actualUser);
+        }
     }
 
     @Test
-    public void testGetUserById() throws Exception {
+    public void testGetUserByNameWhenNameDoesNotOccur() throws Exception {
+        User[] users = prepareUsersForTest();
 
+        User user = sqliteHDDB.getUserByName("notOccurringName");
+        assertEquals(SqliteHDDB.IdFailed, user.getId());
     }
 
     public User[] prepareUsersForTest() {

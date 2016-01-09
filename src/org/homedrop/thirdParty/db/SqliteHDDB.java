@@ -3,6 +3,8 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.PreparedStmt;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.File;
@@ -15,7 +17,9 @@ import org.homedrop.core.utils.LogTag;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SqliteHDDB implements HDDB {
     public static final long IdFailed = -1;
@@ -140,7 +144,19 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public User getUserByName(String name) {
-        return null;
+        User user = null;
+        try {
+            PreparedQuery<UserEntity> preparedQuery = userDao.queryBuilder().where().eq("name", name).prepare();
+            user = userDao.queryForFirst(preparedQuery);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get user by name]");
+        }
+        if (null == user) {
+            user = new UserEntity();
+            user.setId(IdFailed);
+        }
+        return user;
     }
 
     @Override
