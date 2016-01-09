@@ -1,6 +1,9 @@
 package org.homedrop.manager;
 
 import org.homedrop.core.LifeCycle;
+import org.homedrop.core.model.File;
+
+import java.util.List;
 
 public class FilesManager implements LifeCycle{
     private static FilesManager ourInstance = new FilesManager();
@@ -12,6 +15,10 @@ public class FilesManager implements LifeCycle{
     private FilesManager() {
     }
 
+
+    public List<File> list(String path){
+        return null;
+    }
 
     @Override
     public void onStart() {

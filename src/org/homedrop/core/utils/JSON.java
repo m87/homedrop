@@ -1,11 +1,18 @@
 package org.homedrop.core.utils;
 
+import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 
 import java.util.List;
 
 public class JSON {
+    public static String files(List<File> files){
+        return null;
+    }
+    public static List<File> files(String files){
+        return null;
+    }
     public static String rules(List<Rule> rules){
         return null;
     }
