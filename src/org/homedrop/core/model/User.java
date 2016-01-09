@@ -1,6 +1,6 @@
 package org.homedrop.core.model;
 
-import org.homedrop.core.model.device.Identifiable;
+import org.homedrop.core.utils.Identifiable;
 
 public abstract class User implements Identifiable {
     public abstract String getName();

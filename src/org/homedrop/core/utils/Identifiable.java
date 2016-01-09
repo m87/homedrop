@@ -1,4 +1,4 @@
-package org.homedrop.core.model.device;
+package org.homedrop.core.utils;
 
 public interface Identifiable {
     void setId(long id);
