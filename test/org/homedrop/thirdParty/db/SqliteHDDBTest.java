@@ -3,11 +3,14 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
+import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
+import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.ModelHelpers;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.DependencyProvider;
 import org.homedrop.testUtils.TestHelpers;
+import org.homedrop.thirdParty.db.sqliteModels.TagEntity;
 import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -15,8 +18,11 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.*;
@@ -27,6 +33,9 @@ public class SqliteHDDBTest {
     static SqliteHDDB sqliteHDDB;
     static JdbcConnectionSource connectionSource;
 
+    static Map<Class, Method> areItemsEqualMethodsMap;
+    static Map<String, Class> fieldTypesMap;
+
     @BeforeClass
     static public void setUpTest() throws Exception {
         ConfigManager config = ConfigManager.getInstance();
@@ -35,6 +44,14 @@ public class SqliteHDDBTest {
         dependencyProvider.setConfig(config);
         connectionSource = dependencyProvider.getDbConnectionSource();
         sqliteHDDB = new SqliteHDDB(connectionSource);
+        areItemsEqualMethodsMap = new HashMap<Class, Method>();
+        for (Class theClass : new Class[] { User.class, Tag.class }){
+            areItemsEqualMethodsMap.put(theClass, ModelHelpers.class
+                    .getDeclaredMethod("areItemsEqual", theClass, theClass));
+        }
+        fieldTypesMap = new HashMap<String, Class>();
+        fieldTypesMap.put("Id", Long.TYPE);
+        fieldTypesMap.put("Name", String.class);
     }
 
     @After
@@ -65,15 +82,7 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllUsers() throws Exception {
-        User[] users = {
-                new UserEntity(),
-                new UserEntity()
-        };
-        ModelHelpers.setUserFields(users[0], "testuser", "pass", "testuser_home");
-        ModelHelpers.setUserFields(users[1], "testuser2", "pass2", "home_testuser2");
-        for (User user : users) {
-            sqliteHDDB.addUser(user);
-        }
+        User[] users = prepareUsersForTest();
 
         List<User> allUsers = sqliteHDDB.getAllUsers();
 
@@ -103,13 +112,45 @@ public class SqliteHDDBTest {
 
     }
 
+    public static void deleteItemTestTemplate(Identifiable[] items, Class itemType) throws Exception {
+        HDDB sqliteHDDBMock = mock(SqliteHDDB.class);
+        Method deleteMethod = SqliteHDDB.class.getDeclaredMethod("delete" + itemType.getSimpleName(), itemType);
+
+        deleteMethod.invoke(sqliteHDDBMock, items[0]);
+
+        HDDB verifyMock = verify(sqliteHDDBMock, times(1));
+        deleteMethod.invoke(verifyMock, items[0]);
+        verifyNoMoreInteractions(sqliteHDDBMock);
+    }
+
+    public static void deleteItemByIdTestTemplate(Identifiable[] items, Class itemType) throws Exception {
+        Method deleteMethod = SqliteHDDB.class.getDeclaredMethod("delete" + itemType.getSimpleName() + "ById", Long.TYPE);
+
+        deleteMethod.invoke(sqliteHDDB, items[0].getId());
+
+        Method getByIdMethod = SqliteHDDB.class.getDeclaredMethod("get" + itemType.getSimpleName() + "ById", Long.TYPE);
+        Identifiable item = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[0].getId());
+        assertNull(item);
+        Identifiable actualItem = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[1].getId());
+        Method areFieldsEqualMethod = areItemsEqualMethodsMap.get(itemType);
+        assertTrue((boolean)areFieldsEqualMethod.invoke(null, items[1], actualItem));
+    }
+
     @Test
     public void testAddUser() throws Exception {
         User[] users = prepareUsersForTest();
+        assertCollectionIsConsistentWithDb(users, User.class, "Id");
+    }
 
-        for (User expectedUser : users) {
-            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
-            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
+    public void assertCollectionIsConsistentWithDb(Identifiable[] items, Class itemType, String getterFieldName) throws Exception {
+        Method getByFieldMethod = SqliteHDDB.class
+                .getDeclaredMethod("get" + itemType.getSimpleName() + "By" + getterFieldName, fieldTypesMap.get(getterFieldName));
+        Method getFieldFromItemMethod = itemType.getMethod("get" + getterFieldName);
+        Method areFieldsEqualMethod = areItemsEqualMethodsMap.get(itemType);
+        for (Identifiable expectedItem : items) {
+            Object expectedFieldValue = getFieldFromItemMethod.invoke(expectedItem);
+            Identifiable actualItem = (Identifiable) getByFieldMethod.invoke(sqliteHDDB, expectedFieldValue);
+            assertTrue((boolean)areFieldsEqualMethod.invoke(null, expectedItem, actualItem));
         }
     }
 
@@ -123,25 +164,15 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testDeleteUserById() {
+    public void testDeleteUserById() throws Exception {
         User[] users = prepareUsersForTest();
-
-        sqliteHDDB.deleteUserById(users[0].getId());
-
-        List<User> allUsers = sqliteHDDB.getAllUsers();
-        assertEquals(1, allUsers.size());
-        TestHelpers.assertListContainsItemEqual(allUsers, users[1]);
+        deleteItemByIdTestTemplate(users, User.class);
     }
 
     @Test
     public void testDeleteUser() throws Exception {
         User[] users = prepareUsersForTest();
-        HDDB sqliteHDDBMock = mock(SqliteHDDB.class);
-
-        sqliteHDDBMock.deleteUser(users[0]);
-
-        verify(sqliteHDDBMock, times(1)).deleteUser(users[0]);
-        verifyNoMoreInteractions(sqliteHDDBMock);
+        deleteItemTestTemplate(users, User.class);
     }
 
     @Test
@@ -152,10 +183,7 @@ public class SqliteHDDBTest {
 
         sqliteHDDB.updateUser(users[0]);
 
-        for (User expectedUser : users) {
-            User actualUser = sqliteHDDB.getUserById(expectedUser.getId());
-            assertTrue(ModelHelpers.areFieldsEqual(expectedUser, actualUser));
-        }
+        assertCollectionIsConsistentWithDb(users, User.class, "Id");
     }
 
     @Test
@@ -169,14 +197,11 @@ public class SqliteHDDBTest {
         assertEquals(SqliteHDDB.IdFailed, notExistingUser.getId());
     }
 
+
     @Test
     public void testGetUserByName() throws Exception {
         User[] users = prepareUsersForTest();
-
-        for (User expectedUser : users) {
-            User actualUser = sqliteHDDB.getUserByName(expectedUser.getName());
-            TestHelpers.areItemsEqual(expectedUser, actualUser);
-        }
+        assertCollectionIsConsistentWithDb(users, User.class, "Name");
     }
 
     @Test
@@ -198,5 +223,46 @@ public class SqliteHDDBTest {
             sqliteHDDB.addUser(user);
         }
         return users;
+    }
+
+    @Test
+    public void testAddTag() throws Exception {
+        Tag [] tags = prepareTagsForTest();
+        assertCollectionIsConsistentWithDb(tags, Tag.class, "Id");
+    }
+
+    @Test
+    public void testDeleteTag() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+        deleteItemTestTemplate(tags, Tag.class);
+    }
+
+    @Test
+    public void testDeleteTagById() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+        deleteItemByIdTestTemplate(tags, Tag.class);
+    }
+
+    @Test
+    public void testUpdateTag() throws Exception {
+
+    }
+
+    @Test
+    public void testGetTagByName() throws Exception {
+
+    }
+
+    public Tag[] prepareTagsForTest() {
+        Tag[] tags = {
+                new TagEntity(),
+                new TagEntity()
+        };
+        tags[0].setName("testtag");
+        tags[1].setName("testtag2");
+        for (Tag tag: tags) {
+            sqliteHDDB.addTag(tag);
+        }
+        return tags;
     }
 }

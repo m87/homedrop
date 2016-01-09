@@ -2,9 +2,10 @@ package org.homedrop.thirdParty.db.sqliteModels;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import org.homedrop.core.model.Tag;
 
 @DatabaseTable(tableName = "tags")
-public class TagEntity {
+public class TagEntity extends Tag {
     @DatabaseField(generatedId = true)
     private long id;
 

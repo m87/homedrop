@@ -1,5 +1,6 @@
 package org.homedrop.core.utils;
 
+import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 
 public class ModelHelpers {
@@ -9,7 +10,7 @@ public class ModelHelpers {
         user.setHome(home);
     }
 
-    public static boolean areFieldsEqual(User user1, User user2) {
+    public static boolean areItemsEqual(User user1, User user2) {
         if (user1.getId() != user2.getId()) {
             return false;
         }
@@ -19,9 +20,13 @@ public class ModelHelpers {
         if (false == user1.getName().equals(user2.getName())) {
             return false;
         }
-        if (false == user1.getPassword().equals(user2.getPassword())) {
+        return user1.getPassword().equals(user2.getPassword());
+    }
+
+    public static boolean areItemsEqual(Tag tag1, Tag tag2) {
+        if (tag1.getId() != tag2.getId()) {
             return false;
         }
-        return true;
+        return tag1.getName().equals(tag2.getName());
     }
 }
