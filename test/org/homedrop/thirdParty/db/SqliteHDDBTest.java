@@ -57,6 +57,7 @@ public class SqliteHDDBTest {
     @After
     public void tearDown() throws Exception {
         TableUtils.clearTable(connectionSource, UserEntity.class);
+        TableUtils.clearTable(connectionSource, TagEntity.class);
     }
 
     @Test
@@ -109,6 +110,21 @@ public class SqliteHDDBTest {
 
     @Test
     public void testDeleteFileById() throws Exception {
+
+    }
+
+    @Test
+    public void testUpdateFile() throws Exception {
+
+    }
+
+    @Test
+    public void testUpdateFileWhenFileDoesNotExist() throws Exception {
+
+    }
+
+    @Test
+    public void testGetFilesByName() throws Exception {
 
     }
 
@@ -245,12 +261,39 @@ public class SqliteHDDBTest {
 
     @Test
     public void testUpdateTag() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+        String expectedName = "newName";
+        tags[0].setName(expectedName);
 
+        sqliteHDDB.updateTag(tags[0]);
+
+        assertCollectionIsConsistentWithDb(tags, Tag.class, "Id");
+    }
+
+    @Test
+    public void testUpdateTagWhenTagDoesNotExist() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+        Tag notExistingTag = new TagEntity();
+        notExistingTag.setId(999);
+        notExistingTag.setName("notExisting");
+
+        sqliteHDDB.updateTag(notExistingTag);
+
+        assertEquals(SqliteHDDB.IdFailed, notExistingTag.getId());
     }
 
     @Test
     public void testGetTagByName() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+        assertCollectionIsConsistentWithDb(tags, Tag.class, "Name");
+    }
 
+    @Test
+    public void testGetTagByNameWhenNameDoesNotOccur() throws Exception {
+        Tag[] tags = prepareTagsForTest();
+
+        Tag tag = sqliteHDDB.getTagByName("notOccurringName");
+        assertEquals(SqliteHDDB.IdFailed, tag.getId());
     }
 
     public Tag[] prepareTagsForTest() {

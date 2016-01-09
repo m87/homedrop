@@ -185,12 +185,25 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void updateTag(Tag tag) {
-
+        TagEntity tagAsEntity = (TagEntity) tag;
+        updateWithDao(tagDao, tagAsEntity, "Tag", tag.getName());
     }
 
     @Override
     public Tag getTagByName(String name) {
-        return null;
+        Tag tag = null;
+        try {
+            PreparedQuery<TagEntity> preparedQuery = tagDao.queryBuilder().where().eq("name", name).prepare();
+            tag = tagDao.queryForFirst(preparedQuery);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get tag by name]");
+        }
+        if (null == tag) {
+            tag = new TagEntity();
+            tag.setId(IdFailed);
+        }
+        return tag;
     }
 
     @Override

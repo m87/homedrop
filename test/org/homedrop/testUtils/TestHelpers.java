@@ -1,7 +1,9 @@
 package org.homedrop.testUtils;
 
+import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.ModelHelpers;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -27,6 +29,11 @@ public class TestHelpers {
         if (itemSearched instanceof User) {
             return ModelHelpers.areItemsEqual((User)itemSearched, (User)itemWithinList);
         }
-        return false;
+        else if (itemSearched instanceof Tag) {
+            return ModelHelpers.areItemsEqual((Tag)itemSearched, (Tag)itemWithinList);
+        }
+        else {
+            throw new NotImplementedException();
+        }
     }
 }
