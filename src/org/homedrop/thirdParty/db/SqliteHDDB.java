@@ -169,17 +169,18 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void addTag(Tag tag) {
-
+        TagEntity tagAsEntity = (TagEntity) tag;
+        createWithDao(tagDao, tagAsEntity, "Tag", tag.getName());
     }
 
     @Override
     public void deleteTag(Tag tag) {
-
+       deleteTagById(tag.getId());
     }
 
     @Override
     public void deleteTagById(long id) {
-
+        deleteByIdFromDao(tagDao, id, "Tag");
     }
 
     @Override
@@ -194,7 +195,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public Tag getTagById(long id) {
-        return null;
+        Tag tag = getByIdFromDao(tagDao, id);
+        return tag;
     }
 
     @Override

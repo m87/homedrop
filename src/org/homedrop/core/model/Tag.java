@@ -1,6 +1,9 @@
 package org.homedrop.core.model;
 
-public class Tag {
-    private long id;
-    private String name;
+
+import org.homedrop.core.utils.Identifiable;
+
+public abstract class Tag implements Identifiable {
+    public abstract String getName();
+    public abstract void setName(String name);
 }

@@ -25,7 +25,7 @@ public class TestHelpers {
 
     public static <T> boolean areItemsEqual(T itemSearched, T itemWithinList) {
         if (itemSearched instanceof User) {
-            return ModelHelpers.areFieldsEqual((User)itemSearched, (User)itemWithinList);
+            return ModelHelpers.areItemsEqual((User)itemSearched, (User)itemWithinList);
         }
         return false;
     }
