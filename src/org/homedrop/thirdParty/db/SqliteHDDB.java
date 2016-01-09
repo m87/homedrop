@@ -3,22 +3,26 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.PreparedStmt;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
+import org.homedrop.core.model.device.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.manager.UsersManager;
 import org.homedrop.thirdParty.db.sqliteModels.*;
-import sun.awt.SunHints;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SqliteHDDB implements HDDB {
+    public static final long IdFailed = -1;
     private ConnectionSource connectionSource;
     private Dao<UserEntity,Long> userDao;
     private Dao<TagEntity,Long> tagDao;
@@ -107,7 +111,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editFile(File file) {
+    public void updateFile(File file) {
 
     }
 
@@ -123,23 +127,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void addUser(User user) {
-        UserEntity entity = new UserEntity();
-        entity.setName(user.getName());
-        entity.setPassword(user.getPassword());
-        entity.setHome(user.getHome());
-
-        try {
-           if(1 == userDao.create(entity)){
-               user.setId(entity.getId());
-               Log.i(LogTag.DB, "User entity created ::"+user.getName());
-           }else{
-               user.setId(-1);
-               Log.w(LogTag.DB, "User entity not created ::"+user.getName());
-           }
-        } catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [User creation :: "+user.getName()+" ]");
-            e.printStackTrace();
-        }
+        UserEntity userAsEntity = (UserEntity) user;
+        createWithDao(userDao, userAsEntity, "User", user.getName());
     }
 
     @Override
@@ -148,13 +137,26 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editUser(User user) {
-
+    public void updateUser(User user) {
+        UserEntity userAsEntity = (UserEntity) user;
+        updateWithDao(userDao, userAsEntity, "User", user.getName());
     }
 
     @Override
     public User getUserByName(String name) {
-        return null;
+        User user = null;
+        try {
+            PreparedQuery<UserEntity> preparedQuery = userDao.queryBuilder().where().eq("name", name).prepare();
+            user = userDao.queryForFirst(preparedQuery);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get user by name]");
+        }
+        if (null == user) {
+            user = new UserEntity();
+            user.setId(IdFailed);
+        }
+        return user;
     }
 
     @Override
@@ -165,13 +167,7 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void deleteUserById(long id) {
-        try {
-            userDao.deleteById(id);
-           Log.i(LogTag.DB, "User entity deleted ::" + id);
-        } catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [User deletion :: "+id+" ]");
-            e.printStackTrace();
-        }
+        deleteByIdFromDao(userDao, id, "User");
     }
 
     @Override
@@ -190,7 +186,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void editTag(Tag tag) {
+    public void updateTag(Tag tag) {
 
     }
 
@@ -234,6 +230,20 @@ public class SqliteHDDB implements HDDB {
         return null;
     }
 
+    private static <T extends Identifiable> void createWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
+        try {
+            if(1 == dao.create(entity)){
+                Log.i(LogTag.DB, entityName + " entity created ::"+expressiveValue);
+            }else{
+                entity.setId(IdFailed);
+                Log.w(LogTag.DB, entityName + "entity not created ::" + expressiveValue);
+            }
+        } catch (SQLException e) {
+            entity.setId(IdFailed);
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " creation :: "+ expressiveValue +" ]");
+        }
+    }
+
     private static <T> T getByIdFromDao(Dao <T, Long> dao, long id) {
         T item = null;
         try {
@@ -244,5 +254,29 @@ public class SqliteHDDB implements HDDB {
             e.printStackTrace();
         }
         return item;
+    }
+
+    private static <T extends Identifiable> void updateWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
+        try {
+            if(1 == dao.update(entity)){
+                Log.i(LogTag.DB, entityName + " entity updated ::"+expressiveValue);
+            }else{
+                entity.setId(IdFailed);
+                Log.w(LogTag.DB, entityName + "entity not updated ::" + expressiveValue);
+            }
+        } catch (SQLException e) {
+            entity.setId(IdFailed);
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " update :: "+ expressiveValue +" ]");
+        }
+    }
+
+    private void deleteByIdFromDao(Dao dao, long id, String entityName) {
+        try {
+            dao.deleteById(id);
+            Log.i(LogTag.DB, entityName + " entity deleted ::" + id);
+        } catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " deletion :: "+id+" ]");
+            e.printStackTrace();
+        }
     }
 }
