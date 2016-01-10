@@ -119,22 +119,28 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<File> getFilesByName(String name) {
-        List<File> filesWithName = new ArrayList<>();
-        try {
-            PreparedQuery<FileEntity> preparedQuery = fileDao.queryBuilder().where().eq("name", name).prepare();
-            List<FileEntity> temporary = fileDao.query(preparedQuery);
-            filesWithName.addAll(temporary);
-        }
-        catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [Could not get user by name]");
-            filesWithName = new ArrayList<>();
-        }
+        List<File> filesWithName = getFilesByField(name, "name");
         return filesWithName;
     }
 
     @Override
     public List<File> getFilesByPath(String path) {
-        return null;
+        List<File> filesWithPath = getFilesByField(path, "path");
+        return filesWithPath;
+    }
+
+    private List<File> getFilesByField(String fieldValue, String fieldName) {
+        List<File> filesWithFieldValue = new ArrayList<>();
+        try {
+            PreparedQuery<FileEntity> preparedQuery = fileDao.queryBuilder().where().eq(fieldName, fieldValue).prepare();
+            List<FileEntity> temporary = fileDao.query(preparedQuery);
+            filesWithFieldValue.addAll(temporary);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get user by " + fieldName + "]");
+            filesWithFieldValue = new ArrayList<>();
+        }
+        return filesWithFieldValue;
     }
 
     @Override

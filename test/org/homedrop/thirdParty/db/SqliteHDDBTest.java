@@ -40,7 +40,7 @@ public class SqliteHDDBTest {
     @BeforeClass
     static public void setUpTest() throws Exception {
         ConfigManager config = ConfigManager.getInstance();
-        config.loadConfiguration("test-env/homedrop.cfg");
+        config.loadConfiguration("test-env/homedrop_test.cfg");
         dependencyProvider = DependencyProvider.getInstance();
         dependencyProvider.setConfig(config);
         connectionSource = dependencyProvider.getDbConnectionSource();
@@ -166,6 +166,28 @@ public class SqliteHDDBTest {
         File[] files = prepareFilesForTest();
 
         List<File> actualFiles = sqliteHDDB.getFilesByName("notExistingName");
+
+        assertEquals(0, actualFiles.size());
+    }
+
+    @Test
+    public void testGetFilesByPath() throws Exception {
+        File[] files = prepareFilesForTest();
+        File[] expectedFiles = { files[0], files[1] };
+
+        List<File> actualFiles = sqliteHDDB.getFilesByPath("testpath/");
+
+        assertEquals(expectedFiles.length, actualFiles.size());
+        for (File expectedFile : expectedFiles) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
+    }
+
+    @Test
+    public void testGetFilesByPathWhenFileDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        List<File> actualFiles = sqliteHDDB.getFilesByPath("notExistingPath");
 
         assertEquals(0, actualFiles.size());
     }
