@@ -10,10 +10,7 @@ import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.HandlerException;
 import org.homedrop.core.utils.exceptions.UnsupportedCommandException;
-import org.homedrop.manager.ConfigManager;
-import org.homedrop.manager.DependencyProvider;
-import org.homedrop.manager.PluginsManager;
-import org.homedrop.manager.UsersManager;
+import org.homedrop.manager.*;
 import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.homedrop.thirdParty.server.FtpServer;
@@ -33,7 +30,6 @@ public class HomeDrop implements FtpHandler, Runnable {
     private FtpServer server;
     private ConfigManager config = ConfigManager.getInstance();
     private DependencyProvider dependencyProvider = DependencyProvider.getInstance();
-    private HDDB db;
     private CommandHandlerFactory handlerFactory = new CommandHandlerFactory();
 
     /**
@@ -70,8 +66,9 @@ public class HomeDrop implements FtpHandler, Runnable {
         try {
             connectionSource = dependencyProvider.getDbConnectionSource();
             Constructor<? extends HDDB> ctor = dependencyProvider.getDbDriverConstructor();
-            db = ctor.newInstance(new Object[]{connectionSource});
+            HDDB db = ctor.newInstance(new Object[]{connectionSource});
             db.onCreate();
+            DBManager.getInstance().setDb(db);
         } catch (Exception e) {
             Log.d(LogTag.CONFIG, "A critical error occurred: " + e.getMessage());
         }
@@ -81,7 +78,7 @@ public class HomeDrop implements FtpHandler, Runnable {
     public Result beforeCommand(Request request) {
 
         try {
-            handlerFactory.create(request).handle();
+            handlerFactory.create(this, request).handle();
         } catch (HandlerException | UnsupportedCommandException e) {
             Log.d(LogTag.HOMEDROP, "A critical error occurred: " + e.getMessage());
             e.printStackTrace();

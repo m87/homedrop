@@ -8,6 +8,8 @@ import java.util.List;
 
 public class JSON {
     public static String files(List<File> files){
+        for(File file : files){
+        }
         return null;
     }
     public static List<File> files(String files){
