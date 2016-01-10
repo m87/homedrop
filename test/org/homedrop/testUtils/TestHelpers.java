@@ -1,5 +1,6 @@
 package org.homedrop.testUtils;
 
+import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.ModelHelpers;
@@ -31,6 +32,9 @@ public class TestHelpers {
         }
         else if (itemSearched instanceof Tag) {
             return ModelHelpers.areItemsEqual((Tag)itemSearched, (Tag)itemWithinList);
+        }
+        else if (itemSearched instanceof File) {
+            return ModelHelpers.areItemsEqual((File)itemSearched, (File)itemWithinList);
         }
         else {
             throw new NotImplementedException();

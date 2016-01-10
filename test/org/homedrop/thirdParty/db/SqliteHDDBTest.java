@@ -3,6 +3,7 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
+import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Identifiable;
@@ -10,15 +11,15 @@ import org.homedrop.core.utils.ModelHelpers;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.DependencyProvider;
 import org.homedrop.testUtils.TestHelpers;
-import org.homedrop.thirdParty.db.sqliteModels.TagEntity;
-import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
+import org.homedrop.thirdParty.db.sqliteModels.*;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
-//import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.concurrent.Callable;
 import static org.junit.Assert.*;
 
 public class SqliteHDDBTest {
-/*
+
     static DependencyProvider dependencyProvider;
     static SqliteHDDB sqliteHDDB;
     static JdbcConnectionSource connectionSource;
@@ -45,7 +46,7 @@ public class SqliteHDDBTest {
         connectionSource = dependencyProvider.getDbConnectionSource();
         sqliteHDDB = new SqliteHDDB(connectionSource);
         areItemsEqualMethodsMap = new HashMap<Class, Method>();
-        for (Class theClass : new Class[] { User.class, Tag.class }){
+        for (Class theClass : new Class[] { User.class, Tag.class, File.class }){
             areItemsEqualMethodsMap.put(theClass, ModelHelpers.class
                     .getDeclaredMethod("areItemsEqual", theClass, theClass));
         }
@@ -58,6 +59,9 @@ public class SqliteHDDBTest {
     public void tearDown() throws Exception {
         TableUtils.clearTable(connectionSource, UserEntity.class);
         TableUtils.clearTable(connectionSource, TagEntity.class);
+        TableUtils.clearTable(connectionSource, FileEntity.class);
+        TableUtils.clearTable(connectionSource, RuleEntity.class);
+        TableUtils.clearTable(connectionSource, FileTagEntity.class);
     }
 
     @Test
@@ -100,32 +104,91 @@ public class SqliteHDDBTest {
 
     @Test
     public void testAddFile() throws Exception {
-
+        File[] files = prepareFilesForTest();
+        assertCollectionIsConsistentWithDb(files, File.class, "Id");
     }
 
     @Test
     public void testDeleteFile() throws Exception {
-
+        File[] files = prepareFilesForTest();
+        deleteItemTestTemplate(files, File.class);
     }
 
     @Test
     public void testDeleteFileById() throws Exception {
-
+        File[] files = prepareFilesForTest();
+        deleteItemByIdTestTemplate(files, File.class);
     }
 
     @Test
     public void testUpdateFile() throws Exception {
+        File[] files = prepareFilesForTest();
+        String expectedName = "newName";
+        files[1].setName(expectedName);
+        long expectedVersion = 820;
+        files[1].setVersion(expectedVersion);
+        User owner = new UserEntity();
+        ModelHelpers.setUserFields(owner, "testuser2", "pass2", "home_testuser2");
+        owner.setId(files[1].getOwnerId()+1);
+        files[1].setOwner(owner);
 
+        sqliteHDDB.updateFile(files[1]);
+
+        assertCollectionIsConsistentWithDb(files, File.class, "Id");
     }
 
     @Test
     public void testUpdateFileWhenFileDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+        String expectedName = "notExisting";
+        files[1].setName(expectedName);
+        files[1].setId(999);
 
+        sqliteHDDB.updateFile(files[1]);
+        assertEquals(SqliteHDDB.IdFailed, files[1].getId());
     }
 
     @Test
     public void testGetFilesByName() throws Exception {
+        File[] files = prepareFilesForTest();
+        File[] expectedFiles = { files[0], files[2] };
 
+        List<File> actualFiles = sqliteHDDB.getFilesByName("fileName");
+
+        assertEquals(expectedFiles.length, actualFiles.size());
+        for (File expectedFile : expectedFiles) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
+    }
+
+    @Test
+    public void testGetFilesByNameWhenFileDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        List<File> actualFiles = sqliteHDDB.getFilesByName("notExistingName");
+
+        assertEquals(0, actualFiles.size());
+    }
+
+    public File[] prepareFilesForTest() {
+        User[] owners = prepareUsersForTest();
+        FileEntity[] files = {
+                new FileEntity(),
+                new FileEntity(),
+                new FileEntity()
+        };
+        ModelHelpers.setFileFields(files[0], "fileName", 5621, Date.valueOf("2016-01-05"),
+                owners[0], "testpath/", 2);
+        ModelHelpers.setFileFields(files[1], "fileName2", 113, Date.valueOf("2016-01-04"),
+                owners[0], "testpath/", 1);
+        ModelHelpers.setFileFields(files[2], "fileName", 585, Date.valueOf("2016-01-05"),
+                owners[1], "testpath2/", 4);
+
+        for (File file : files) {
+            sqliteHDDB.addFile(file);
+        }
+
+        return files;
     }
 
     public static void deleteItemTestTemplate(Identifiable[] items, Class itemType) throws Exception {
@@ -307,5 +370,5 @@ public class SqliteHDDBTest {
             sqliteHDDB.addTag(tag);
         }
         return tags;
-    }*/
+    }
 }

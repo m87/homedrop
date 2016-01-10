@@ -3,11 +3,13 @@ package org.homedrop.thirdParty.db.sqliteModels;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import org.homedrop.core.model.File;
+import org.homedrop.core.model.User;
 
 import java.sql.Date;
 
 @DatabaseTable(tableName = "files")
-public class FileEntity {
+public class FileEntity extends File {
 
     @DatabaseField(generatedId = true)
     private long id;
@@ -37,7 +39,6 @@ public class FileEntity {
     public long getId() {
         return id;
     }
-
     public void setId(long id) {
         this.id = id;
     }
@@ -45,7 +46,6 @@ public class FileEntity {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -53,7 +53,6 @@ public class FileEntity {
     public String getPath() {
         return path;
     }
-
     public void setPath(String path) {
         this.path = path;
     }
@@ -61,7 +60,6 @@ public class FileEntity {
     public long getCheckSum() {
         return checkSum;
     }
-
     public void setCheckSum(long checkSum) {
         this.checkSum = checkSum;
     }
@@ -69,7 +67,6 @@ public class FileEntity {
     public long getVersion() {
         return version;
     }
-
     public void setVersion(long version) {
         this.version = version;
     }
@@ -77,16 +74,14 @@ public class FileEntity {
     public Date getLastChange() {
         return lastChange;
     }
-
     public void setLastChange(Date lastChange) {
         this.lastChange = lastChange;
     }
 
-    public UserEntity getOwner() {
+    public User getOwner() {
         return owner;
     }
-
-    public void setOwner(UserEntity owner) {
-        this.owner = owner;
+    public void setOwner(User owner) {
+        this.owner = (UserEntity) owner;
     }
 }

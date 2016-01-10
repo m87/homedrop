@@ -6,6 +6,7 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
@@ -16,6 +17,7 @@ import org.homedrop.core.utils.LogTag;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SqliteHDDB implements HDDB {
@@ -94,27 +96,40 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void addFile(File file) {
-
+        FileEntity fileAsEntity = (FileEntity) file;
+        createWithDao(fileDao, fileAsEntity, "File", file.getName());
     }
 
     @Override
     public void deleteFile(File file) {
-
+        deleteFileById(file.getId());
     }
 
     @Override
     public void deleteFileById(long id) {
-
+        //TODO: remember it is not enough - FileTag also has to be removed
+        deleteByIdFromDao(fileDao, id, "File");
     }
 
     @Override
     public void updateFile(File file) {
-
+        FileEntity fileAsEntity = (FileEntity) file;
+        updateWithDao(fileDao, fileAsEntity, "File", file.getName());
     }
 
     @Override
     public List<File> getFilesByName(String name) {
-        return null;
+        List<File> filesWithName = new ArrayList<>();
+        try {
+            PreparedQuery<FileEntity> preparedQuery = fileDao.queryBuilder().where().eq("name", name).prepare();
+            List<FileEntity> temporary = fileDao.query(preparedQuery);
+            filesWithName.addAll(temporary);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get user by name]");
+            filesWithName = new ArrayList<>();
+        }
+        return filesWithName;
     }
 
     @Override
@@ -124,7 +139,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public File getFileById(long id) {
-        return null;
+        File file = getByIdFromDao(fileDao, id);
+        return file;
     }
 
     @Override

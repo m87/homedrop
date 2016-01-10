@@ -9,7 +9,6 @@ import org.homedrop.core.utils.JSON;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.HandlerException;
-import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.FilesManager;
 
 import java.io.File;
