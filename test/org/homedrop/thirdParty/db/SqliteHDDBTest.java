@@ -420,7 +420,24 @@ public class SqliteHDDBTest {
 
     @Test
     public void testUnassignTag() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
 
+        sqliteHDDB.unassignTag(files[1], tags[2]);
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[2]);
+        assertEquals(0, actualFiles.size());
+        List<Tag> actualTags = sqliteHDDB.getFileTags(files[1]);
+        assertEquals(1, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+
+        sqliteHDDB.unassignTag(files[0], tags[0]);
+        actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(1, actualFiles.size());
+        TestHelpers.assertListContainsItemEqual(actualFiles, files[2]);
+        actualTags = sqliteHDDB.getFileTags(files[0]);
+        assertEquals(1, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
     }
 
     @Test

@@ -4,6 +4,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
+import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.PreparedDelete;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import static com.j256.ormlite.stmt.QueryBuilder.*;
@@ -251,17 +253,38 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void unassignTag(File file, Tag tag) {
-
+        try {
+            DeleteBuilder<FileTagEntity, Long> deleteBuilder = fileTagDao.deleteBuilder();
+            deleteBuilder.where().eq("file_id", file.getId()).and().eq("tag_id", tag.getId());
+            deleteBuilder.delete();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+            Log.d(LogTag.DB, "Sql error! [Delete FileTag :: " + file.getId() + " " + tag.getId() +" ]");
+        }
     }
 
     @Override
     public List<Tag> getFileTags(File file) {
-        return null;
+        List<Tag> fileTags = getFileTagsById(file.getId());
+        return fileTags;
     }
 
     @Override
     public List<Tag> getFileTagsById(long id) {
-        return null;
+        List<Tag> fileTags = new ArrayList<>();
+        try {
+            QueryBuilder queryForIdsOfTags = fileTagDao.queryBuilder();
+            queryForIdsOfTags.where().eq("file_id", id);
+            queryForIdsOfTags.selectColumns("tag_id");
+            PreparedQuery<TagEntity> preparedQuery = tagDao.queryBuilder().where().in("id", queryForIdsOfTags).prepare();
+            List<TagEntity> temporary = tagDao.query(preparedQuery);
+            fileTags.addAll(temporary);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Files retrieval by fileId :: " + id +  " ]");
+        }
+        return fileTags;
     }
 
     @Override
