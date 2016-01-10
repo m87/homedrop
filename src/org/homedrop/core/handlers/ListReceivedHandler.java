@@ -5,8 +5,8 @@ import org.homedrop.Result;
 import org.homedrop.core.HomeDrop;
 import org.homedrop.core.utils.exceptions.HandlerException;
 
-public class GetHandler extends CommandHandler{
-   public GetHandler(HomeDrop system, Request request){
+public class ListReceivedHandler extends CommandHandler {
+    public ListReceivedHandler(HomeDrop system, Request request){
         super(system, request);
     }
 
