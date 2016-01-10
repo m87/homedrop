@@ -5,7 +5,6 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.File;
-import org.homedrop.core.model.FileTag;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Identifiable;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +114,18 @@ public class SqliteHDDBTest {
     public void testDeleteFile() throws Exception {
         File[] files = prepareFilesForTest();
         deleteItemTestTemplate(files, File.class);
+    }
+
+    @Test
+    public void testDeleteFileUnassignTags() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+
+        long deletedFileId = files[0].getId();
+        sqliteHDDB.deleteFile(files[0]);
+        List<Tag> actualTagsOfDeletedFile = sqliteHDDB.getFileTagsById(deletedFileId);
+        assertEquals(0, actualTagsOfDeletedFile.size());
     }
 
     @Test
@@ -343,6 +353,18 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testDeleteTagUnassignFromFile() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+
+        long deletedTagId = tags[0].getId();
+        sqliteHDDB.deleteTag(tags[0]);
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(0, actualFiles.size());
+    }
+
+    @Test
     public void testDeleteTagById() throws Exception {
         Tag[] tags = prepareTagsForTest();
         deleteItemByIdTestTemplate(tags, Tag.class);
@@ -442,22 +464,27 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetFileTags() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
 
-    }
-
-    @Test
-    public void testGetFileTagsById() throws Exception {
-
+        List<Tag> actualTags = sqliteHDDB.getFileTags(files[0]);
+        assertEquals(2, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[0]);
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
     }
 
     @Test
     public void testGetFilesByTag() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
 
-    }
-
-    @Test
-    public void testGetFilesByTagId() throws Exception {
-
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(2, actualFiles.size());
+        for (File expectedFile : tagToFileMap.get(tags[0])) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
     }
 
     public Map<Tag, File[]> prepareFileTagsForTest(Tag[] tags, File[] files) {

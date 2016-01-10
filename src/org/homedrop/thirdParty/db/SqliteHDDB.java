@@ -4,10 +4,8 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.PreparedDelete;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.*;
+
 import static com.j256.ormlite.stmt.QueryBuilder.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
@@ -19,8 +17,7 @@ import org.homedrop.core.utils.LogTag;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class SqliteHDDB implements HDDB {
@@ -110,8 +107,10 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void deleteFileById(long id) {
-        //TODO: remember it is not enough - FileTag also has to be removed
         deleteByIdFromDao(fileDao, id, "File");
+        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
+        foreignIdsToFieldsMap.put("file_id", id);
+        deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
     }
 
     @Override
@@ -211,6 +210,9 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void deleteTagById(long id) {
         deleteByIdFromDao(tagDao, id, "Tag");
+        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
+        foreignIdsToFieldsMap.put("tag_id", id);
+        deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
     }
 
     @Override
@@ -253,14 +255,28 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void unassignTag(File file, Tag tag) {
+        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
+        foreignIdsToFieldsMap.put("file_id", file.getId());
+        foreignIdsToFieldsMap.put("tag_id", tag.getId());
+        deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+    }
+
+    private static <T> void deleteFromWeakEntity(Dao<T, Long> weakEntityDao,
+                                                 Map<String, Long> foreignIdsToFieldsMap, String entityName) {
         try {
-            DeleteBuilder<FileTagEntity, Long> deleteBuilder = fileTagDao.deleteBuilder();
-            deleteBuilder.where().eq("file_id", file.getId()).and().eq("tag_id", tag.getId());
+            DeleteBuilder<T, Long> deleteBuilder = weakEntityDao.deleteBuilder();
+            Iterator<Map.Entry<String, Long>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
+            Map.Entry<String, Long> entry = iterator.next();
+            Where<T, Long> where = deleteBuilder.where().eq(entry.getKey(), entry.getValue());
+            while (iterator.hasNext()) {
+                entry = iterator.next();
+                where = where.and().eq(entry.getKey(), entry.getValue());
+            }
             deleteBuilder.delete();
         }
         catch (SQLException e) {
             e.printStackTrace();
-            Log.d(LogTag.DB, "Sql error! [Delete FileTag :: " + file.getId() + " " + tag.getId() +" ]");
+            Log.d(LogTag.DB, "Sql error! [Delete " + entityName + "]");
         }
     }
 
