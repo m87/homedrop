@@ -3,14 +3,14 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
+import static com.j256.ormlite.stmt.QueryBuilder.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.apache.log4j.BasicConfigurator;
-import org.homedrop.core.model.File;
-import org.homedrop.core.model.Rule;
-import org.homedrop.core.model.Tag;
-import org.homedrop.core.model.User;
+import org.homedrop.core.model.*;
 import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -19,6 +19,7 @@ import org.homedrop.thirdParty.db.sqliteModels.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class SqliteHDDB implements HDDB {
     public static final long IdFailed = -1;
@@ -241,7 +242,11 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void assignTag(File file, Tag tag) {
-
+        FileTagEntity fileTag = new FileTagEntity();
+        fileTag.setFile((FileEntity) file);
+        fileTag.setTag((TagEntity) tag);
+        String expressiveInfo = "FileId: " + file.getId() + ", TagId: " + tag.getId();
+        createWithDao(fileTagDao, fileTag, "FileTag", expressiveInfo);
     }
 
     @Override
@@ -250,23 +255,36 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public List<Tag> getTags(File file) {
+    public List<Tag> getFileTags(File file) {
         return null;
     }
 
     @Override
-    public List<Tag> getTags(long id) {
+    public List<Tag> getFileTagsById(long id) {
         return null;
     }
 
     @Override
     public List<File> getFilesByTag(Tag tag) {
-        return null;
+        List<File> filesAssignedToTag = getFilesByTagId(tag.getId());
+        return filesAssignedToTag;
     }
 
     @Override
-    public List<File> getFilesByTag(long id) {
-        return null;
+    public List<File> getFilesByTagId(long id) {
+        List<File> filesAssignedToTag = new ArrayList<>();
+        try {
+            QueryBuilder queryForIdsOfFiles = fileTagDao.queryBuilder();
+            queryForIdsOfFiles.where().eq("tag_id", id);
+            queryForIdsOfFiles.selectColumns("file_id");
+            PreparedQuery<FileEntity> preparedQuery = fileDao.queryBuilder().where().in("id", queryForIdsOfFiles).prepare();
+            List<FileEntity> temporary = fileDao.query(preparedQuery);
+            filesAssignedToTag.addAll(temporary);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Files retrieval by tagId :: " + id +  " ]");
+        }
+        return filesAssignedToTag;
     }
 
     private static <T extends Identifiable> void createWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
