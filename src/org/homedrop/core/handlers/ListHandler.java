@@ -22,10 +22,16 @@ public class ListHandler extends CommandHandler{
         super(system, request);
     }
 
+    /**
+     * Creates file with list of files in requested folder. For file request returns IS_FILE code
+     * @param request request has to represent same command
+     * @return result IS_FILE for files
+     * @throws HandlerException
+     */
     @Override
     public Result handle(Request request) throws HandlerException{
         super.handle(request);
-        String json = JSON.files(FilesManager.getInstance().list(request.getCommand().getArgs()[0]));
+        String json = JSON.files(FilesManager.getInstance().list(request.getUserName(),request.getCommand().getArgs()[0]));
 
 
         Path path = Paths.get(FilesManager.getInstance().getHome(request.getUserName()), Default.MAIN_TMP, Default.LIST_TMP,

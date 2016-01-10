@@ -118,6 +118,11 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public List<File> getFilesByPath(String path) {
+        return null;
+    }
+
+    @Override
     public File getFileById(long id) {
         return null;
     }

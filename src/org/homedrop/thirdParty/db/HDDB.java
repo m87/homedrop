@@ -19,6 +19,7 @@ public interface HDDB {
     void deleteFileById(long id);
     void updateFile(File file);
     List<File> getFilesByName(String name);
+    List<File> getFilesByPath(String path);
     File getFileById(long id);
 
     void addUser(User user);
