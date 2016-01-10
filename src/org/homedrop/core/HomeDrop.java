@@ -3,10 +3,13 @@ package org.homedrop.core;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import org.homedrop.Command;
 import org.homedrop.Plugin;
+import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.core.utils.exceptions.UnsupportedCommandException;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.DependencyProvider;
 import org.homedrop.manager.PluginsManager;
@@ -31,6 +34,7 @@ public class HomeDrop implements FtpHandler, Runnable {
     private ConfigManager config = ConfigManager.getInstance();
     private DependencyProvider dependencyProvider = DependencyProvider.getInstance();
     private HDDB db;
+    private CommandHandlerFactory handlerFactory = new CommandHandlerFactory();
 
     /**
      * Restore session from file
@@ -74,18 +78,28 @@ public class HomeDrop implements FtpHandler, Runnable {
     }
 
     @Override
-    public Result beforeCommand(Command command) {
+    public Result beforeCommand(Request request) {
+
+        try {
+            handlerFactory.create(request).handle();
+        } catch (HandlerException | UnsupportedCommandException e) {
+            Log.d(LogTag.HOMEDROP, "A critical error occurred: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+
+        //TODO PluginGuard.exectuePlugins();
         Map<String, Plugin> map = PluginsManager.getInstance().getPlugins();
         for (String p : map.keySet()) {
             System.out.print("[" + map.get(p) + "]: ");
-            map.get(p).handleCommand(command.getName(), null);
+            map.get(p).handleRequest(request);
 
         }
         return null;
     }
 
     @Override
-    public Result afterCommand(Command command) {
+    public Result afterCommand(Request request) {
         return null;
     }
 

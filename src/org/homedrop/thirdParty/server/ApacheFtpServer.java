@@ -15,6 +15,8 @@ import org.homedrop.core.model.*;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.thirdParty.com.ApacheFtpRequestWrapper;
+import org.homedrop.thirdParty.com.ApacheFtpResultWrapper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -81,6 +83,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
             Map<String, Ftplet> m = new HashMap<>();
             m.put("ftplet1", new Ftplet() {
+                ApacheFtpRequestWrapper wrapper = new ApacheFtpRequestWrapper();
                 @Override
                 public void init(FtpletContext ftpletContext) throws FtpException {
 
@@ -93,13 +96,14 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    parent.beforeCommand(new Command(ftpRequest.getCommand(), new String[]{"a"}));
+                    parent.beforeCommand(wrapper.from(ftpRequest));
                     return FtpletResult.DEFAULT;
+
                 }
 
                 @Override
                 public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
-                    parent.afterCommand(new Command("a", new String[]{"a"}));
+                    parent.afterCommand(wrapper.from(ftpRequest));
                     return FtpletResult.DEFAULT;
                 }
 
