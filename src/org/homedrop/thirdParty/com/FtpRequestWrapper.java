@@ -7,7 +7,7 @@ import java.util.Map;
 
 /** Wrapper for ftp requeset models*/
 public interface FtpRequestWrapper<T> {
-    Request from(T req);
+    Request from(T req, String userName);
     T to(Request req);
 
     Map<String, String> argsAsMap(String args);

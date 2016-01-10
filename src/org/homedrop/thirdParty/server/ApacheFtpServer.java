@@ -96,14 +96,14 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    parent.beforeCommand(wrapper.from(ftpRequest));
+                    parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
                     return FtpletResult.DEFAULT;
 
                 }
 
                 @Override
                 public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
-                    parent.afterCommand(wrapper.from(ftpRequest));
+                    parent.afterCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
                     return FtpletResult.DEFAULT;
                 }
 

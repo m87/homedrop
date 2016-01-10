@@ -94,6 +94,8 @@ public class ConfigManager implements LifeCycle{
             }
 
             this.dbPath = (String)map.get("db");
+            this.tmpPath = (String)map.get("tmp");
+            if(null == this.tmpPath) this.tmpPath = "/tmp";
 
             dbDriverName = (String)map.get("db-driver");
 
@@ -124,6 +126,12 @@ public class ConfigManager implements LifeCycle{
 
     public String getDbDriverName() {
         return dbDriverName;
+    }
+
+    private String tmpPath;
+
+    public String getTmpPath() {
+        return tmpPath;
     }
 
     private String serverConfigPath;

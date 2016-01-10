@@ -20,6 +20,11 @@ public class FilesManager implements LifeCycle{
         return null;
     }
 
+    public String getHome(String userName){
+        //return DBManager.getInstance().getHome(userName);
+        return null;
+    }
+
     @Override
     public void onStart() {
 

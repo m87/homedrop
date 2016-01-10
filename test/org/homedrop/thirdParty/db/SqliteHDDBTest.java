@@ -16,7 +16,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.mockito.Mockito.*;
+//import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 import static org.junit.Assert.*;
 
 public class SqliteHDDBTest {
-
+/*
     static DependencyProvider dependencyProvider;
     static SqliteHDDB sqliteHDDB;
     static JdbcConnectionSource connectionSource;
@@ -307,5 +307,5 @@ public class SqliteHDDBTest {
             sqliteHDDB.addTag(tag);
         }
         return tags;
-    }
+    }*/
 }
