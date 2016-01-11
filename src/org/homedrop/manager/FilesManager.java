@@ -2,11 +2,10 @@ package org.homedrop.manager;
 
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.File;
-import org.homedrop.core.model.User;
+import org.homedrop.thirdParty.db.HDDB;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FilesManager implements LifeCycle{
@@ -20,23 +19,16 @@ public class FilesManager implements LifeCycle{
     }
 
 
-    public List<File> list(String userName, String path){
-        Path p = Paths.get(DevicesManager.getInstance().getDevice().getMount(),
-                FilesManager.getInstance().getHome(userName)
-                ,path);
+    public List<File> list(String userName, String path) {
+        Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
         List<File> out = DBManager.getInstance().getDb().getFilesByPath(p.toString());
         return out;
     }
 
-    public String getHome(String userName){
-        //return DBManager.getInstance().getHome(userName);
-        //TODO simplify
-        for(User u : DBManager.getInstance().getDb().getAllUsers()){
-            if(u.getName().equals(userName)){
-                return u.getHome();
-            }
-        }
-        return null;
+    public String getHome(String userName) {
+        HDDB db = DBManager.getInstance().getDb();
+        String home = db.getUserByName(userName).getHome();
+        return home;
     }
 
     @Override
