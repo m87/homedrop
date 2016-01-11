@@ -2,7 +2,6 @@ package org.homedrop.thirdParty.db.sqliteModels;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import org.homedrop.core.model.FileTag;
 import org.homedrop.core.utils.Identifiable;
 
 @DatabaseTable(tableName = "fileTag")
