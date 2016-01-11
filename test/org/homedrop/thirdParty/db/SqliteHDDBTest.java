@@ -9,6 +9,7 @@ import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.ModelHelpers;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.manager.ConfigManager;
 import org.homedrop.manager.DependencyProvider;
 import org.homedrop.testUtils.TestHelpers;
@@ -19,6 +20,7 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -151,7 +153,7 @@ public class SqliteHDDBTest {
         assertCollectionIsConsistentWithDb(files, File.class, "Id");
     }
 
-    @Test
+    @Test(expected=ItemNotFoundException.class)
     public void testUpdateFileWhenFileDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
         String expectedName = "notExisting";
@@ -159,7 +161,6 @@ public class SqliteHDDBTest {
         files[1].setId(999);
 
         sqliteHDDB.updateFile(files[1]);
-        assertEquals(SqliteHDDB.IdFailed, files[1].getId());
     }
 
     @Test
@@ -244,8 +245,13 @@ public class SqliteHDDBTest {
         deleteMethod.invoke(sqliteHDDB, items[0].getId());
 
         Method getByIdMethod = SqliteHDDB.class.getDeclaredMethod("get" + itemType.getSimpleName() + "ById", Long.TYPE);
-        Identifiable item = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[0].getId());
-        assertNull(item);
+        try {
+            Identifiable item = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[0].getId());
+            fail("Expected an exception");
+        }
+        catch (InvocationTargetException e) {
+            assertThat(e.getCause(), instanceOf(ItemNotFoundException.class));
+        }
         Identifiable actualItem = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[1].getId());
         Method areFieldsEqualMethod = areItemsEqualMethodsMap.get(itemType);
         assertTrue((boolean)areFieldsEqualMethod.invoke(null, items[1], actualItem));
@@ -301,7 +307,7 @@ public class SqliteHDDBTest {
         assertCollectionIsConsistentWithDb(users, User.class, "Id");
     }
 
-    @Test
+    @Test(expected = ItemNotFoundException.class)
     public void testUpdateUserWhenUserDoesNotExist() throws Exception {
         User[] users = prepareUsersForTest();
         User notExistingUser = new UserEntity();
@@ -309,7 +315,6 @@ public class SqliteHDDBTest {
         notExistingUser.setId(999);
 
         sqliteHDDB.updateUser(notExistingUser);
-        assertEquals(SqliteHDDB.IdFailed, notExistingUser.getId());
     }
 
 
@@ -319,12 +324,11 @@ public class SqliteHDDBTest {
         assertCollectionIsConsistentWithDb(users, User.class, "Name");
     }
 
-    @Test
+    @Test(expected = ItemNotFoundException.class)
     public void testGetUserByNameWhenNameDoesNotOccur() throws Exception {
         User[] users = prepareUsersForTest();
 
         User user = sqliteHDDB.getUserByName("notOccurringName");
-        assertEquals(SqliteHDDB.IdFailed, user.getId());
     }
 
     public User[] prepareUsersForTest() {
@@ -381,7 +385,7 @@ public class SqliteHDDBTest {
         assertCollectionIsConsistentWithDb(tags, Tag.class, "Id");
     }
 
-    @Test
+    @Test(expected = ItemNotFoundException.class)
     public void testUpdateTagWhenTagDoesNotExist() throws Exception {
         Tag[] tags = prepareTagsForTest();
         Tag notExistingTag = new TagEntity();
@@ -389,8 +393,6 @@ public class SqliteHDDBTest {
         notExistingTag.setName("notExisting");
 
         sqliteHDDB.updateTag(notExistingTag);
-
-        assertEquals(SqliteHDDB.IdFailed, notExistingTag.getId());
     }
 
     @Test
@@ -399,12 +401,11 @@ public class SqliteHDDBTest {
         assertCollectionIsConsistentWithDb(tags, Tag.class, "Name");
     }
 
-    @Test
+    @Test(expected=ItemNotFoundException.class)
     public void testGetTagByNameWhenNameDoesNotOccur() throws Exception {
         Tag[] tags = prepareTagsForTest();
 
         Tag tag = sqliteHDDB.getTagByName("notOccurringName");
-        assertEquals(SqliteHDDB.IdFailed, tag.getId());
     }
 
     public Tag[] prepareTagsForTest() {

@@ -3,6 +3,7 @@ package org.homedrop.manager;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.ModelHelpers;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.testUtils.TestHelpers;
 import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.SqliteHDDB;
@@ -31,11 +32,6 @@ public class FilesManagerTest {
         DBManager.getInstance().setDb(dbMock);
     }
 
-    @After
-    public void tearDown() throws Exception {
-
-    }
-
     @Test
     public void testList() throws Exception {
         User user = new UserEntity();
@@ -57,6 +53,21 @@ public class FilesManagerTest {
             TestHelpers.assertListContainsItemEqual(actualFilesByPath, expectedFile);
         }
     }
+
+    @Test
+    public void testListWhenPathIsIncorrect() throws Exception {
+        User user = new UserEntity();
+        user.setName("username");
+        user.setHome("home_path");
+        String incorrectPath = "incorrectPath";
+        when(dbMock.getUserByName(user.getName())).thenThrow(new ItemNotFoundException(""));
+
+        List<File> actualFilesByPath = FilesManager.getInstance().list(user.getName(), incorrectPath);
+
+        assertEquals(0, actualFilesByPath.size());
+    }
+
+
 
     @Test
     public void testGetHome() throws Exception {

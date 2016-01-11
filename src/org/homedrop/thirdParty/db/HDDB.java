@@ -4,6 +4,7 @@ import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.model.Rule;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public interface HDDB {
      * Update file with id equal to id of given file object.
      * @param file
      */
-    void updateFile(File file);
+    void updateFile(File file) throws ItemNotFoundException;
 
     /**
      * Get all files of given name.
@@ -67,8 +68,9 @@ public interface HDDB {
      * Get file of given id
      * @param id
      * @return File of given id
+     * @throws ItemNotFoundException
      */
-    File getFileById(long id);
+    File getFileById(long id) throws ItemNotFoundException;
 
     /**
      * Add new user to database. If success change user id for created entity id.
@@ -93,21 +95,23 @@ public interface HDDB {
      * Update user with id equal to id of given user object.
      * @param user
     */
-    void updateUser(User user);
+    void updateUser(User user) throws ItemNotFoundException;
 
     /**
      * Get all users of given name.
      * @param name
      * @return All users of given name
+     * @throws ItemNotFoundException
      */
-    User getUserByName(String name); //unique
+    User getUserByName(String name) throws ItemNotFoundException;
 
     /**
      * Get user of given id.
-      * @param id
+     * @param id
      * @return User of given id
+     * @throws ItemNotFoundException
      */
-    User getUserById(long id);
+    User getUserById(long id) throws ItemNotFoundException;
 
     /**
      * Add new tag to database. If success change tag id for created entity id.
@@ -120,33 +124,35 @@ public interface HDDB {
      * Delete tag with given id from database.
      * @param tag
      */
-    void deleteTag(Tag tag);
+    void deleteTag(Tag tag) throws ItemNotFoundException;
 
     /**
      * Update tag with id equal to id of given tag object.
      * @param id
      */
-    void deleteTagById(long id);
+    void deleteTagById(long id) throws ItemNotFoundException;
 
     /**
      * Update tag with id equal to id of given tag object.
      * @param tag
      */
-    void updateTag(Tag tag);
+    void updateTag(Tag tag) throws ItemNotFoundException;
 
     /**
      * Get tag of given name. Name is unique.
      * @param name
      * @return Tag of given name
+     * @throws ItemNotFoundException
      */
-    Tag getTagByName(String name);
+    Tag getTagByName(String name) throws ItemNotFoundException;
 
     /**
      * Get tag of given id.
      * @param id
      * @return Tag of given id
+     * @throws ItemNotFoundException
      */
-    Tag getTagById(long id);
+    Tag getTagById(long id) throws ItemNotFoundException;
 
     /**
      * Assign tag to file

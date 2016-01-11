@@ -6,7 +6,6 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.*;
 
-import static com.j256.ormlite.stmt.QueryBuilder.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.apache.log4j.BasicConfigurator;
@@ -14,6 +13,7 @@ import org.homedrop.core.model.*;
 import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
@@ -122,7 +122,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void updateFile(File file) {
+    public void updateFile(File file) throws ItemNotFoundException {
         FileEntity fileAsEntity = (FileEntity) file;
         updateWithDao(fileDao, fileAsEntity, "File", file.getName());
     }
@@ -154,8 +154,8 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public File getFileById(long id) {
-        File file = getByIdFromDao(fileDao, id);
+    public File getFileById(long id) throws ItemNotFoundException {
+        File file = getByIdFromDao(fileDao, id, "File");
         return file;
     }
 
@@ -171,13 +171,13 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void updateUser(User user) {
+    public void updateUser(User user) throws ItemNotFoundException {
         UserEntity userAsEntity = (UserEntity) user;
         updateWithDao(userDao, userAsEntity, "User", user.getName());
     }
 
     @Override
-    public User getUserByName(String name) {
+    public User getUserByName(String name) throws ItemNotFoundException {
         User user = null;
         try {
             PreparedQuery<UserEntity> preparedQuery = userDao.queryBuilder().where().eq("name", name).prepare();
@@ -187,15 +187,14 @@ public class SqliteHDDB implements HDDB {
             Log.d(LogTag.DB, "Sql error! [Could not get user by name]");
         }
         if (null == user) {
-            user = new UserEntity();
-            user.setId(IdFailed);
+            throw new ItemNotFoundException("User");
         }
         return user;
     }
 
     @Override
-    public User getUserById(long id) {
-        User user = getByIdFromDao(userDao, id);
+    public User getUserById(long id) throws ItemNotFoundException {
+        User user = getByIdFromDao(userDao, id, "User");
         return user;
     }
 
@@ -211,12 +210,12 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void deleteTag(Tag tag) {
+    public void deleteTag(Tag tag) throws ItemNotFoundException {
        deleteTagById(tag.getId());
     }
 
     @Override
-    public void deleteTagById(long id) {
+    public void deleteTagById(long id) throws ItemNotFoundException {
         try {
             TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
                 deleteByIdFromDao(tagDao, id, "Tag");
@@ -228,17 +227,18 @@ public class SqliteHDDB implements HDDB {
         }
         catch (SQLException e) {
             Log.d(LogTag.DB, "Sql transaction error! [Could not delete tag by id: " + id + "]");
+            throw new ItemNotFoundException("Tag");
         }
     }
 
     @Override
-    public void updateTag(Tag tag) {
+    public void updateTag(Tag tag) throws ItemNotFoundException {
         TagEntity tagAsEntity = (TagEntity) tag;
         updateWithDao(tagDao, tagAsEntity, "Tag", tag.getName());
     }
 
     @Override
-    public Tag getTagByName(String name) {
+    public Tag getTagByName(String name) throws ItemNotFoundException {
         Tag tag = null;
         try {
             PreparedQuery<TagEntity> preparedQuery = tagDao.queryBuilder().where().eq("name", name).prepare();
@@ -248,15 +248,14 @@ public class SqliteHDDB implements HDDB {
             Log.d(LogTag.DB, "Sql error! [Could not get tag by name]");
         }
         if (null == tag) {
-            tag = new TagEntity();
-            tag.setId(IdFailed);
+            throw new ItemNotFoundException("Tag");
         }
         return tag;
     }
 
     @Override
-    public Tag getTagById(long id) {
-        Tag tag = getByIdFromDao(tagDao, id);
+    public Tag getTagById(long id) throws ItemNotFoundException {
+        Tag tag = getByIdFromDao(tagDao, id, "Tag");
         return tag;
     }
 
@@ -356,7 +355,7 @@ public class SqliteHDDB implements HDDB {
         }
     }
 
-    private static <T> T getByIdFromDao(Dao <T, Long> dao, long id) {
+    private static <T> T getByIdFromDao(Dao <T, Long> dao, long id, String entityName) throws ItemNotFoundException {
         T item = null;
         try {
             item = dao.queryForId(id);
@@ -365,19 +364,22 @@ public class SqliteHDDB implements HDDB {
             Log.d(LogTag.DB, "Sql error! [Could not get item]");
             e.printStackTrace();
         }
+        if (null == item) {
+            throw new ItemNotFoundException(entityName);
+        }
         return item;
     }
 
-    private static <T extends Identifiable> void updateWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
+    private static <T extends Identifiable> void updateWithDao(Dao <T, Long> dao, T entity, String entityName,
+                                                               String expressiveValue) throws ItemNotFoundException {
         try {
             if(1 == dao.update(entity)){
                 Log.i(LogTag.DB, entityName + " entity updated ::"+expressiveValue);
             }else{
-                entity.setId(IdFailed);
                 Log.w(LogTag.DB, entityName + "entity not updated ::" + expressiveValue);
+                throw new ItemNotFoundException(entityName);
             }
         } catch (SQLException e) {
-            entity.setId(IdFailed);
             Log.d(LogTag.DB, "Sql error! [" + entityName + " update :: "+ expressiveValue +" ]");
         }
     }
