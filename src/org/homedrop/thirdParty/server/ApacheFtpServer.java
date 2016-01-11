@@ -55,7 +55,8 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
             BaseUser user = new BaseUser();
             user.setName(u.getName());
             user.setPassword(u.getPassword());
-            user.setHomeDirectory(u.getHome());
+            //user.setHomeDirectory(u.getHome());
+            user.setHomeDirectory("/home/rt/test2");
             List<Authority> authorities = new ArrayList<Authority>();
             authorities.add(new WritePermission());
             user.setAuthorities(authorities);
@@ -96,14 +97,18 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
+                    try {
+                        parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
+                    }catch (NullPointerException e){
+
+                    }
                     return FtpletResult.DEFAULT;
 
                 }
 
                 @Override
                 public FtpletResult afterCommand(FtpSession ftpSession, FtpRequest ftpRequest, FtpReply ftpReply) throws FtpException, IOException {
-                    parent.afterCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
+ //                   parent.afterCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
                     return FtpletResult.DEFAULT;
                 }
 

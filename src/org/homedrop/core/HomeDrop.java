@@ -79,9 +79,13 @@ public class HomeDrop implements FtpHandler, Runnable {
 
         try {
             handlerFactory.create(this, request).handle();
-        } catch (HandlerException | UnsupportedCommandException e) {
+        } catch (HandlerException e){
+
             Log.d(LogTag.HOMEDROP, "A critical error occurred: " + e.getMessage());
             e.printStackTrace();
+         }catch(UnsupportedCommandException e) {
+
+            Log.w(LogTag.HOMEDROP, e.getMessage());
         }
 
 

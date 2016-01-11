@@ -58,7 +58,7 @@ public class ConfigManager implements LifeCycle{
      */
     public void loadConfiguration(String rootPath){
         try {
-            //BasicConfigurator.configure();
+            BasicConfigurator.configure();
             YamlReader reader = new YamlReader(new FileReader(rootPath));
             Object object = reader.read();
             Map map = (Map)object;

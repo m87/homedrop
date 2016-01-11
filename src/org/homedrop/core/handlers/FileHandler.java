@@ -5,8 +5,9 @@ import org.homedrop.Result;
 import org.homedrop.core.HomeDrop;
 import org.homedrop.core.utils.exceptions.HandlerException;
 
-public class RuleHandler extends CommandHandler{
-    public RuleHandler(HomeDrop system, Request request){
+public class FileHandler extends CommandHandler{
+
+    public FileHandler(HomeDrop system, Request request){
         super(system, request);
     }
 

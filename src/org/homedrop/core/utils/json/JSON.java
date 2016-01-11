@@ -1,5 +1,7 @@
-package org.homedrop.core.utils;
+package org.homedrop.core.utils.json;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
@@ -7,6 +9,22 @@ import org.homedrop.core.model.Tag;
 import java.util.List;
 
 public class JSON {
+
+    public static String createReport(List<ReportElement> elements){
+        String out="";
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
+        out = gson.toJson(elements);
+        return out;
+    }
+
+    public static List<ReportElement> parseReport(String report){
+        GsonBuilder builder = new GsonBuilder();
+        Gson gson = builder.create();
+        List<ReportElement> out = gson.fromJson(report, List.class);
+        return out;
+    }
+
     public static String files(List<File> files){
         for(File file : files){
         }
