@@ -3,6 +3,7 @@ package org.homedrop.thirdParty.db;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
+import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
@@ -39,6 +40,7 @@ public class SqliteHDDBTest {
 
     @BeforeClass
     static public void setUpTest() throws Exception {
+        BasicConfigurator.configure();
         ConfigManager config = ConfigManager.getInstance();
         config.loadConfiguration("test-env/homedrop_test.cfg");
         dependencyProvider = DependencyProvider.getInstance();
@@ -66,7 +68,7 @@ public class SqliteHDDBTest {
 
     @Test
     public void testOnCreate() throws Exception {
-        Class<?>[] entityClasses = { UserEntity.class };
+        Class<?>[] entityClasses = { UserEntity.class, TagEntity.class, FileEntity.class, RuleEntity.class, FileTagEntity.class };
         for (Class<?> entityClass : entityClasses) {
             TableUtils.dropTable(connectionSource, entityClass, true);
         }
@@ -112,6 +114,18 @@ public class SqliteHDDBTest {
     public void testDeleteFile() throws Exception {
         File[] files = prepareFilesForTest();
         deleteItemTestTemplate(files, File.class);
+    }
+
+    @Test
+    public void testDeleteFileUnassignTags() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+
+        long deletedFileId = files[0].getId();
+        sqliteHDDB.deleteFile(files[0]);
+        List<Tag> actualTagsOfDeletedFile = sqliteHDDB.getFileTagsById(deletedFileId);
+        assertEquals(0, actualTagsOfDeletedFile.size());
     }
 
     @Test
@@ -339,6 +353,18 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testDeleteTagUnassignFromFile() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+
+        long deletedTagId = tags[0].getId();
+        sqliteHDDB.deleteTag(tags[0]);
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(0, actualFiles.size());
+    }
+
+    @Test
     public void testDeleteTagById() throws Exception {
         Tag[] tags = prepareTagsForTest();
         deleteItemByIdTestTemplate(tags, Tag.class);
@@ -384,13 +410,95 @@ public class SqliteHDDBTest {
     public Tag[] prepareTagsForTest() {
         Tag[] tags = {
                 new TagEntity(),
+                new TagEntity(),
+                new TagEntity(),
                 new TagEntity()
         };
         tags[0].setName("testtag");
         tags[1].setName("testtag2");
+        tags[2].setName("testtag3");
+        tags[3].setName("notUsedTag");
         for (Tag tag: tags) {
             sqliteHDDB.addTag(tag);
         }
         return tags;
+    }
+
+    @Test
+    public void testAssignTag() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+
+        for (Map.Entry<Tag, File[]> tagFile : tagToFileMap.entrySet()) {
+            File[] expectedFiles = tagFile.getValue();
+            List<File> actualFiles = sqliteHDDB.getFilesByTag(tagFile.getKey());
+            assertEquals(expectedFiles.length, actualFiles.size());
+            for (File expectedFile : expectedFiles) {
+                TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+            }
+        }
+    }
+
+    @Test
+    public void testUnassignTag() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+
+        sqliteHDDB.unassignTag(files[1], tags[2]);
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[2]);
+        assertEquals(0, actualFiles.size());
+        List<Tag> actualTags = sqliteHDDB.getFileTags(files[1]);
+        assertEquals(1, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+
+        sqliteHDDB.unassignTag(files[0], tags[0]);
+        actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(1, actualFiles.size());
+        TestHelpers.assertListContainsItemEqual(actualFiles, files[2]);
+        actualTags = sqliteHDDB.getFileTags(files[0]);
+        assertEquals(1, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+    }
+
+    @Test
+    public void testGetFileTags() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+
+        List<Tag> actualTags = sqliteHDDB.getFileTags(files[0]);
+        assertEquals(2, actualTags.size());
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[0]);
+        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+    }
+
+    @Test
+    public void testGetFilesByTag() throws Exception {
+        File[] files = prepareFilesForTest();
+        Tag[] tags = prepareTagsForTest();
+        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        assertEquals(2, actualFiles.size());
+        for (File expectedFile : tagToFileMap.get(tags[0])) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
+    }
+
+    public Map<Tag, File[]> prepareFileTagsForTest(Tag[] tags, File[] files) {
+        Map<Tag, File[]> tagFileMap = new HashMap<>();
+        tagFileMap.put(tags[0], new File[] { files[0], files[2] });
+        tagFileMap.put(tags[1], new File[] { files[0], files[1] });
+        tagFileMap.put(tags[2], new File[] { files[1] });
+        tagFileMap.put(tags[3], new File[] {});
+        for (Map.Entry<Tag, File[]> tagFile : tagFileMap.entrySet()) {
+            File[] filesAssignedToTag = tagFile.getValue();
+            for (File fileAssignedToTag : filesAssignedToTag) {
+                sqliteHDDB.assignTag(fileAssignedToTag, tagFile.getKey());
+            }
+        }
+        return tagFileMap;
     }
 }

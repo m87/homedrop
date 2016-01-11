@@ -38,9 +38,9 @@ public interface HDDB {
 
     void assignTag(File file, Tag tag);
     void unassignTag(File file, Tag tag);
-    List<Tag> getTags(File file);
-    List<Tag> getTags(long id);
+    List<Tag> getFileTags(File file);
+    List<Tag> getFileTagsById(long id);
     List<File> getFilesByTag(Tag tag);
-    List<File> getFilesByTag(long id);
+    List<File> getFilesByTagId(long id);
 
 }

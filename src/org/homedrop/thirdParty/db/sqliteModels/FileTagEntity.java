@@ -2,9 +2,11 @@ package org.homedrop.thirdParty.db.sqliteModels;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import org.homedrop.core.model.FileTag;
+import org.homedrop.core.utils.Identifiable;
 
 @DatabaseTable(tableName = "fileTag")
-public class FileTagEntity {
+public class FileTagEntity implements Identifiable {
     @DatabaseField(generatedId = true)
     private long id;
 
@@ -12,7 +14,7 @@ public class FileTagEntity {
     private FileEntity file;
 
     @DatabaseField(canBeNull = false, foreign = true)
-    private TagEntity tagEntity;
+    private TagEntity tag;
 
     public FileTagEntity(){}
 
@@ -32,11 +34,11 @@ public class FileTagEntity {
         this.file = file;
     }
 
-    public TagEntity getTagEntity() {
-        return tagEntity;
+    public TagEntity getTag() {
+        return tag;
     }
 
-    public void setTagEntity(TagEntity tagEntity) {
-        this.tagEntity = tagEntity;
+    public void setTag(TagEntity tag) {
+        this.tag = tag;
     }
 }
