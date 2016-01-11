@@ -30,7 +30,6 @@ public class HomeDrop implements FtpHandler, Runnable {
     private FtpServer server;
     private ConfigManager config = ConfigManager.getInstance();
     private DependencyProvider dependencyProvider = DependencyProvider.getInstance();
-    private CommandHandlerFactory handlerFactory = new CommandHandlerFactory();
 
     /**
      * Restore session from file
@@ -76,27 +75,7 @@ public class HomeDrop implements FtpHandler, Runnable {
 
     @Override
     public Result beforeCommand(Request request) {
-
-        try {
-            handlerFactory.create(this, request).handle();
-        } catch (HandlerException e){
-
-            Log.d(LogTag.HOMEDROP, "A critical error occurred: " + e.getMessage());
-            e.printStackTrace();
-         }catch(UnsupportedCommandException e) {
-
-            Log.w(LogTag.HOMEDROP, e.getMessage());
-        }
-
-
-        //TODO PluginGuard.exectuePlugins();
-        Map<String, Plugin> map = PluginsManager.getInstance().getPlugins();
-        for (String p : map.keySet()) {
-            System.out.print("[" + map.get(p) + "]: ");
-            map.get(p).handleRequest(request);
-
-        }
-        return null;
+        return CommandManager.getInstance().beforeCommand(request);
     }
 
     @Override

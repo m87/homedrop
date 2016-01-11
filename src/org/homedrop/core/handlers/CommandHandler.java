@@ -10,25 +10,14 @@ import org.homedrop.core.utils.exceptions.HandlerException;
 public abstract class CommandHandler {
     /** Required stage */
     public enum Type{BEFORE, AFTER}
-    private HomeDrop system;
     private Request request;
 
     /**
      *
-     * @param system HomeDrop instance
      * @param request Request, which invoked creation
      */
-    public CommandHandler(HomeDrop system, Request request){
-        this.system = system;
+    public CommandHandler(Request request){
         this.request =request;
-    }
-
-    /**
-     *
-     * @return base HomeDrop instance
-     */
-    public HomeDrop getSystem() {
-        return system;
     }
 
     /**

@@ -7,8 +7,8 @@ import org.homedrop.core.utils.exceptions.HandlerException;
 
 public class FileHandler extends CommandHandler{
 
-    public FileHandler(HomeDrop system, Request request){
-        super(system, request);
+    public FileHandler(Request request){
+        super(request);
     }
 
     @Override

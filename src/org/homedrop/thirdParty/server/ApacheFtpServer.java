@@ -3,13 +3,17 @@ package org.homedrop.thirdParty.server;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.filesystem.nativefs.NativeFileSystemFactory;
 import org.apache.ftpserver.ftplet.*;
+import org.apache.ftpserver.impl.LocalizedFtpReply;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.ssl.SslConfigurationFactory;
 import org.apache.ftpserver.usermanager.PasswordEncryptor;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
 import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.Command;
+import org.homedrop.Result;
 import org.homedrop.core.HomeDrop;
 import org.homedrop.core.model.*;
 import org.homedrop.core.model.User;
@@ -79,6 +83,15 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
             listenerFactory.setPort(Integer.parseInt((String) map.get("port")));
 
+
+/*
+            SslConfigurationFactory ssl = new SslConfigurationFactory();
+            ssl.setKeystoreFile(new File("/home/rt/ftpserver.jks"));
+            ssl.setKeystorePassword("password");
+// set the SSL configuration for the listener
+            listenerFactory.setSslConfiguration(ssl.createSslConfiguration());
+            listenerFactory.setImplicitSsl(true);
+*/
             serverFactory.addListener("default", listenerFactory.createListener());
 
 
@@ -97,10 +110,13 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-                    try {
-                        parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
-                    }catch (NullPointerException e){
 
+                    try {
+                        Result result = parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
+                        if(result.getCode() != Result.UNSUPPORTED) {
+                            ftpSession.write(new DefaultFtpReply(FtpReply.REPLY_211_SYSTEM_STATUS_REPLY, result.getMessage()));
+                        }
+                    }catch (NullPointerException e){
                     }
                     return FtpletResult.DEFAULT;
 

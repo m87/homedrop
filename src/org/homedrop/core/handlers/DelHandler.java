@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DelHandler extends CommandHandler{
-    public DelHandler(HomeDrop system, Request request){
-        super(system, request);
+    public DelHandler(Request request){
+        super(request);
     }
 
     @Override
@@ -24,7 +24,7 @@ public class DelHandler extends CommandHandler{
 
 
         ReportHelper.create(reportList, "");
-        return new Result(Result.OK);
+        return new Result(Result.OK, "");
 
     }
 

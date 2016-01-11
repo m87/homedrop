@@ -2,12 +2,11 @@ package org.homedrop.core.handlers;
 
 import org.homedrop.Request;
 import org.homedrop.Result;
-import org.homedrop.core.HomeDrop;
 import org.homedrop.core.utils.exceptions.HandlerException;
 
 public class ListHandler extends CommandHandler{
-    public ListHandler(HomeDrop system, Request request){
-        super(system, request);
+    public ListHandler(Request request){
+        super(request);
     }
 
     /**
@@ -43,7 +42,7 @@ public class ListHandler extends CommandHandler{
             Log.w(LogTag.HOMEDROP, "Couldn't create list file.[IOException]");
         }
 */
-        return new Result(Result.OK);
+        return new Result(Result.OK,"AAAA");
     }
 
     @Override
