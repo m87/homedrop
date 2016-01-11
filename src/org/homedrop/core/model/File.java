@@ -1,12 +1,13 @@
 package org.homedrop.core.model;
 
 import org.homedrop.core.utils.Identifiable;
-import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 
 import java.sql.Date;
-import java.util.List;
 
 public abstract class File implements Identifiable {
+
+    public enum FileType { File, Directory }
+
     public abstract long getId();
     public abstract void setId(long id);
 
@@ -28,8 +29,15 @@ public abstract class File implements Identifiable {
     public abstract User getOwner();
     public abstract void setOwner(User owner);
 
+    public abstract FileType getType();
+    public abstract void setType(FileType type);
+
     public long getOwnerId() {
         User owner = getOwner();
         return owner.getId();
+    }
+
+    public boolean isDirectory() {
+        return getType() ==  FileType.Directory;
     }
 }

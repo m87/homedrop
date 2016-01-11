@@ -29,6 +29,9 @@ public class FileEntity extends File {
     @DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
     private Date lastChange;
 
+    @DatabaseField(canBeNull = false)
+    private FileType type;
+
     @DatabaseField(canBeNull = false, foreign = true)
     private UserEntity owner;
 
@@ -83,5 +86,15 @@ public class FileEntity extends File {
     }
     public void setOwner(User owner) {
         this.owner = (UserEntity) owner;
+    }
+
+    @Override
+    public FileType getType() {
+        return type;
+    }
+
+    @Override
+    public void setType(FileType type) {
+        this.type = type;
     }
 }

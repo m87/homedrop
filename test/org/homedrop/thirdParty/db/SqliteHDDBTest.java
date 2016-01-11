@@ -214,11 +214,11 @@ public class SqliteHDDBTest {
                 new FileEntity()
         };
         ModelHelpers.setFileFields(files[0], "fileName", 5621, Date.valueOf("2016-01-05"),
-                owners[0], "testpath/", 2);
+                owners[0], "testpath/", File.FileType.File, 2);
         ModelHelpers.setFileFields(files[1], "fileName2", 113, Date.valueOf("2016-01-04"),
-                owners[0], "testpath/", 1);
+                owners[0], "testpath/", File.FileType.File, 1);
         ModelHelpers.setFileFields(files[2], "fileName", 585, Date.valueOf("2016-01-05"),
-                owners[1], "testpath2/", 4);
+                owners[1], "testpath2/", File.FileType.File, 4);
 
         for (File file : files) {
             sqliteHDDB.addFile(file);

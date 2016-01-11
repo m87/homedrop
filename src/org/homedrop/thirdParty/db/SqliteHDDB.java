@@ -107,10 +107,18 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void deleteFileById(long id) {
-        deleteByIdFromDao(fileDao, id, "File");
-        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
-        foreignIdsToFieldsMap.put("file_id", id);
-        deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+        try {
+            TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
+                deleteByIdFromDao(fileDao, id, "File");
+                Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
+                foreignIdsToFieldsMap.put("file_id", id);
+                deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+                return null;
+            });
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql transaction error! [Could not delete file by id: " + id + "]");
+        }
     }
 
     @Override
@@ -209,10 +217,18 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void deleteTagById(long id) {
-        deleteByIdFromDao(tagDao, id, "Tag");
-        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
-        foreignIdsToFieldsMap.put("tag_id", id);
-        deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+        try {
+            TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
+                deleteByIdFromDao(tagDao, id, "Tag");
+                Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
+                foreignIdsToFieldsMap.put("tag_id", id);
+                deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+                return null;
+            });
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql transaction error! [Could not delete tag by id: " + id + "]");
+        }
     }
 
     @Override
