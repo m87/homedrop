@@ -1,4 +1,4 @@
-package org.homedrop.core.utils.json;
+package org.homedrop;
 
 public class ReportElement {
     private String path;

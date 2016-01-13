@@ -1,8 +1,21 @@
 package org.homedrop.core.handlers;
 
+import org.apache.commons.io.FileUtils;
 import org.homedrop.Request;
 import org.homedrop.Result;
+import org.homedrop.core.Default;
+import org.homedrop.core.model.File;
+import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
+import org.homedrop.core.utils.json.JSON;
+import org.homedrop.manager.FilesManager;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class ListHandler extends CommandHandler{
     public ListHandler(Request request){
@@ -17,32 +30,32 @@ public class ListHandler extends CommandHandler{
      */
     @Override
     public Result handle(Request request) throws HandlerException{
-        super.handle(request);
-        //String json = JSON.files(FilesManager.getInstance().list(request.getUserName(),request.getCommand().getArgs()[0]));
+       // super.handle(request);
+        //TODO relative path in json, indexall
+        if(!request.getCommand().getName().equals(getRequest().getCommand().getName())) throw new HandlerException();
+        List<File> t = FilesManager.getInstance().list(request.getUserName(), request.getCommand().getArgs()[0]);
+        String json = JSON.files(t);
 
-        String json = "AAAAAAA";
-/*
-        //Path path = Paths.get(FilesManager.getInstance().getHome(request.getUserName()), Default.MAIN_TMP, Default.LIST_TMP,
-          //       request.getCommand().getArgs()[0], Default.LIST_NAME);
-        //File file = new File(path.toString());
-        File file = new File("/home/rt/test2/.hd/.lists/list");
-        File file2 = new File("/home/rt/test2/.hd/.lists");
+        Path path = null;
+        try {
+            path = Paths.get(FilesManager.getInstance().getHome(request.getUserName()), Default.MAIN_TMP, Default.LIST_TMP,
+                    request.getCommand().getArgs()[0], Default.LIST_NAME + String.valueOf(request.getSpecialKey()));
+        } catch (ItemNotFoundException e) {
+            e.printStackTrace();
+        }
+        java.io.File file = new java.io.File(path.toString());
 
-        if(file2.getParentFile() != null){
-            if(!file.mkdirs()){
-                Log.w(LogTag.HOMEDROP, "Couldn't create dirs for list file.");
-                new Result(Result.ERROR);
-            }
+        if(file.getParentFile() != null){
+            file.getParentFile().mkdirs();
         }
 
         try {
-            //FileUtils.writeStringToFile(new File(path.toString()), json);
             FileUtils.writeStringToFile(file, json);
         } catch (IOException e) {
             Log.w(LogTag.HOMEDROP, "Couldn't create list file.[IOException]");
+            e.printStackTrace();
         }
-*/
-        return new Result(Result.OK,"AAAA");
+        return new Result(Result.OK, path.toString());
     }
 
     @Override

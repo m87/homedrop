@@ -52,6 +52,9 @@ public class CommandManager implements LifeCycle, FtpHandler{
           return  handlerFactory.create(command).handle();
         } catch (HandlerException e) {
             Log.w(LogTag.HOMEDROP, e.getMessage());
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            return new Result(Result.UNSUPPORTED, "");
         }
 
         /*

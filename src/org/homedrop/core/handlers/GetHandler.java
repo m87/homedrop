@@ -12,7 +12,7 @@ public class GetHandler extends CommandHandler{
 
     @Override
     public Result handle(Request request) throws HandlerException{
-        return super.handle(request);
+        return null;
     }
 
     @Override

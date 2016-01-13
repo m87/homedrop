@@ -14,4 +14,7 @@ public class Default {
     public static String LIST_NAME = "list";
 
 
+    public static String ARG_SEP = "|";
+
+
 }

@@ -2,10 +2,16 @@ package org.homedrop.core.utils.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.homedrop.JSONConverter;
+import org.homedrop.MetaFile;
+import org.homedrop.ReportElement;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
+import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JSON {
@@ -26,9 +32,11 @@ public class JSON {
     }
 
     public static String files(List<File> files){
+        List<MetaFile> tmp = new ArrayList<>();
         for(File file : files){
+            tmp.add(new MetaFile(file.getPath()));
         }
-        return null;
+        return JSONConverter.files(tmp);
     }
     public static List<File> files(String files){
         return null;

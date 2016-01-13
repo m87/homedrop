@@ -20,16 +20,16 @@ public class FileEntity extends File {
     @DatabaseField(canBeNull = false)
     private String path;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = true)
     private long checkSum;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = true)
     private long version;
 
-    @DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
+    @DatabaseField(canBeNull = true, dataType = DataType.SERIALIZABLE)
     private Date lastChange;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = true)
     private FileType type;
 
     @DatabaseField(canBeNull = false, foreign = true)

@@ -3,8 +3,12 @@ package org.homedrop.thirdParty.server;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.command.CommandFactory;
+import org.apache.ftpserver.command.impl.DefaultCommandFactory;
 import org.apache.ftpserver.filesystem.nativefs.NativeFileSystemFactory;
 import org.apache.ftpserver.ftplet.*;
+import org.apache.ftpserver.impl.FtpIoSession;
+import org.apache.ftpserver.impl.FtpServerContext;
 import org.apache.ftpserver.impl.LocalizedFtpReply;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.ssl.SslConfigurationFactory;
@@ -14,11 +18,14 @@ import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.homedrop.Command;
 import org.homedrop.Result;
+import org.homedrop.core.Default;
+import org.homedrop.core.HD;
 import org.homedrop.core.HomeDrop;
 import org.homedrop.core.model.*;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
+import org.homedrop.manager.CommandManager;
 import org.homedrop.thirdParty.com.ApacheFtpRequestWrapper;
 import org.homedrop.thirdParty.com.ApacheFtpResultWrapper;
 
@@ -59,8 +66,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
             BaseUser user = new BaseUser();
             user.setName(u.getName());
             user.setPassword(u.getPassword());
-            //user.setHomeDirectory(u.getHome());
-            user.setHomeDirectory("/home/rt/test2");
+            user.setHomeDirectory(u.getHome());
             List<Authority> authorities = new ArrayList<Authority>();
             authorities.add(new WritePermission());
             user.setAuthorities(authorities);
@@ -84,6 +90,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
             listenerFactory.setPort(Integer.parseInt((String) map.get("port")));
 
 
+
 /*
             SslConfigurationFactory ssl = new SslConfigurationFactory();
             ssl.setKeystoreFile(new File("/home/rt/ftpserver.jks"));
@@ -92,12 +99,11 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
             listenerFactory.setSslConfiguration(ssl.createSslConfiguration());
             listenerFactory.setImplicitSsl(true);
 */
+            ApacheFtpRequestWrapper wrapper = new ApacheFtpRequestWrapper();
             serverFactory.addListener("default", listenerFactory.createListener());
-
 
             Map<String, Ftplet> m = new HashMap<>();
             m.put("ftplet1", new Ftplet() {
-                ApacheFtpRequestWrapper wrapper = new ApacheFtpRequestWrapper();
                 @Override
                 public void init(FtpletContext ftpletContext) throws FtpException {
 
@@ -110,14 +116,18 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
                 @Override
                 public FtpletResult beforeCommand(FtpSession ftpSession, FtpRequest ftpRequest) throws FtpException, IOException {
-
-                    try {
-                        Result result = parent.beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName()));
-                        if(result.getCode() != Result.UNSUPPORTED) {
-                            ftpSession.write(new DefaultFtpReply(FtpReply.REPLY_211_SYSTEM_STATUS_REPLY, result.getMessage()));
-                        }
-                    }catch (NullPointerException e){
+                    if(ftpSession.getUser() == null){
+                        return FtpletResult.DEFAULT;
                     }
+                    Result result = CommandManager.getInstance().beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName(), ftpSession.getSessionId().hashCode()));
+                    System.out.println(ftpRequest.getCommand());
+                    System.out.println(ftpRequest.getArgument());
+                    System.out.println(result.getCode());
+                    if(result.getCode() != Result.UNSUPPORTED) {
+                        ftpSession.write(new DefaultFtpReply(FtpReply.REPLY_211_SYSTEM_STATUS_REPLY, result.getMessage()));
+                        return FtpletResult.SKIP;
+                    }
+
                     return FtpletResult.DEFAULT;
 
                 }

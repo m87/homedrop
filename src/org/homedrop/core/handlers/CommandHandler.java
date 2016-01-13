@@ -26,11 +26,10 @@ public abstract class CommandHandler {
      * @return Result
      * @throws HandlerException Different commands.
      */
-    public Result handle(Request request) throws HandlerException{
+    public abstract Result handle(Request request) throws HandlerException;/*{
         if(!request.getCommand().getName().equals(this.request.getCommand().getName())) throw new HandlerException();
-        return null;
     }
-
+*/
     /**
      * Handles base request
      * @return result

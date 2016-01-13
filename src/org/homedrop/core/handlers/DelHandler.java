@@ -1,12 +1,10 @@
 package org.homedrop.core.handlers;
 
+import org.homedrop.ReportElement;
 import org.homedrop.Request;
 import org.homedrop.Result;
-import org.homedrop.core.HomeDrop;
 import org.homedrop.core.utils.ReportHelper;
 import org.homedrop.core.utils.exceptions.HandlerException;
-import org.homedrop.core.utils.json.JSON;
-import org.homedrop.core.utils.json.ReportElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +16,13 @@ public class DelHandler extends CommandHandler{
 
     @Override
     public Result handle(Request request) throws HandlerException{
-        super.handle(request);
-        List<ReportElement> reportList = new ArrayList<>();
+        return null;
+        /*List<ReportElement> reportList = new ArrayList<>();
 
 
 
         ReportHelper.create(reportList, "");
-        return new Result(Result.OK, "");
+        return new Result(Result.OK, "");*/
 
     }
 

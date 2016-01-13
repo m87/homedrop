@@ -4,10 +4,12 @@ package org.homedrop;
 public class Request {
     private String userName;
     private Command command;
+    private int specialKey;
 
-    public Request(Command command, String userName){
+    public Request(Command command, String userName, int specialKey){
         this.command = command;
         this.userName = userName;
+        this.specialKey = specialKey;
     }
 
     public Command getCommand() {
@@ -16,5 +18,9 @@ public class Request {
 
     public String getUserName() {
         return userName;
+    }
+
+    public int getSpecialKey() {
+        return specialKey;
     }
 }

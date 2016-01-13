@@ -1,6 +1,9 @@
 package org.homedrop.core.utils;
 
 
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.homedrop.core.Default;
 
 import java.io.File;
@@ -12,6 +15,19 @@ import java.io.IOException;
  * @see LogTag
  */
 public class Log {
+    private static Logger log = Logger.getLogger(Log.class.getName());
+    private static FileAppender file;
+
+    static{
+        try {
+            file = new FileAppender(new SimpleLayout(),"/tmp/homedrop/log");
+            file.setAppend(false);
+            log.addAppender(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Runtime message
      *
@@ -24,12 +40,13 @@ public class Log {
     }
 
     private static void log(String lvl, String tag, String content, String path){
-        try {
-            FileWriter file = new FileWriter(path);
-            file.append(lvl+tag+": " +content + '\n');
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //String tmp = lvl+tag+": "+content;
+       // try {
+            //FileWriter file = new FileWriter(path);
+            //file.append(lvl+tag+": " +content + '\n');
+       // } catch (IOException e) {
+        //    e.printStackTrace();
+       // }
     }
 
     /**
@@ -40,7 +57,9 @@ public class Log {
      * @see LogTag
      */
     public static void d(String tag, String content, String file){
-        log("[DEBUG]",tag,content,file);
+        String tmp = tag+": "+content;
+        log.debug(tmp);
+        //log("[DEBUG]",tag,content,file);
     }
     /**
      * Debug log level. For critical errors only! [Default location]
@@ -49,7 +68,9 @@ public class Log {
      * @see LogTag
      */
     public static void d(String tag, String content){
-        log("[DEBUG]",tag,content,Default.LOGFILE);
+        String tmp = tag+": "+content;
+        log.debug(tmp);
+        //log("[DEBUG]",tag,content,Default.LOGFILE);
     }
 
 
@@ -61,8 +82,9 @@ public class Log {
      * @see LogTag
      */
     public static void w(String tag, String content, String file){
-
-        log("[WARNING]",tag,content,file);
+        String tmp = tag+": "+content;
+        log.warn(tmp);
+        //log("[WARNING]",tag,content,file);
     }
     /**
      * Warning log level. For non critical errors i.e. Unsuccessful user creation. [Default location]
@@ -71,7 +93,9 @@ public class Log {
      * @see LogTag
      */
     public static void w(String tag, String content){
-        log("[WARNING]",tag,content,Default.LOGFILE);
+        String tmp = tag+": "+content;
+        log.warn(tmp);
+        //log("[WARNING]",tag,content,Default.LOGFILE);
 
     }
 
@@ -83,7 +107,9 @@ public class Log {
      * @see LogTag
      */
     public static void i(String tag, String content, String file){
-        log("[INFO]",tag,content,file);
+        String tmp = tag+": "+content;
+        log.info(tmp);
+        //log("[INFO]",tag,content,file);
 
     }
     /**
@@ -93,7 +119,9 @@ public class Log {
      * @see LogTag
      */
     public static void i(String tag, String content){
-        log("[INFO]",tag,content,Default.LOGFILE);
+        String tmp = tag+": "+content;
+        log.info(tmp);
+        //log("[INFO]",tag,content,Default.LOGFILE);
 
     }
 

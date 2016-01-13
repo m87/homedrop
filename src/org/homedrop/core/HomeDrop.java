@@ -1,6 +1,7 @@
 package org.homedrop.core;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import org.apache.ftpserver.ftplet.UserManager;
 import org.homedrop.Command;
 import org.homedrop.Plugin;
 import org.homedrop.Request;
@@ -45,8 +46,10 @@ public class HomeDrop implements FtpHandler, Runnable {
     public HomeDrop() {
         //check if resumed
         prepareConfigurationAndDependencies("./test-env/homedrop.cfg");
-        prepareServer();
         prepareDb();
+        prepareServer();
+
+
     }
 
     public void prepareConfigurationAndDependencies(String configFilePath) {
@@ -56,6 +59,7 @@ public class HomeDrop implements FtpHandler, Runnable {
 
     public void prepareServer() {
         server = ServerFactory.createServer(config.getServerType());
+        UsersManager.getInstance().loadUsers();
         server.setUpUsers(UsersManager.getInstance().getUsers().values());
         server.setUp(config.getServerConfigPath(), this);
     }
@@ -123,10 +127,14 @@ public class HomeDrop implements FtpHandler, Runnable {
                         new BufferedReader(new InputStreamReader(System.in));
 
                 input = br.readLine();
-                switch (input){
+                switch (input.split(" ")[0]){
                     case "exit" :{
                         server.stop();
                         stop = false;
+                        break;
+                    }
+                    case "indexall":{
+                        FilesManager.getInstance().indexAll(input.split(" ")[1]);
                         break;
                     }
                 }

@@ -74,13 +74,9 @@ public class ConfigManager implements LifeCycle{
 
             YamlReader usersReader = new YamlReader(new FileReader((String)map.get("users")));
             Object usersObject = usersReader.read();
-            Map<String, Map> usersMap = (Map)usersObject;
+            usersMap = (Map)usersObject;
 
-            for(String m : usersMap.keySet()){
-                User u = new UserEntity();
-                ModelHelpers.setUserFields(u, m,(String)usersMap.get(m).get("pass"), (String)usersMap.get(m).get("home"));
-                UsersManager.getInstance().addUser(u.getId(),u);
-            }
+
             Map<String, String> pluginsMap = (Map)map.get("plugins");
 
             for(String m: pluginsMap.keySet()){
@@ -112,6 +108,13 @@ public class ConfigManager implements LifeCycle{
 
 
     //Settings
+
+    private Map<String, Map> usersMap;
+
+    public Map<String, Map> getUsersMap() {
+        return usersMap;
+    }
+
     private String serverType;
     public String getServerType() {
         return serverType;

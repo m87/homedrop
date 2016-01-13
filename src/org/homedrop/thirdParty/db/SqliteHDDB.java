@@ -51,6 +51,11 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void onCreate() {
         try {
+            TableUtils.dropTable(connectionSource, UserEntity.class,true);
+            TableUtils.dropTable(connectionSource, FileEntity.class,true);
+            TableUtils.dropTable(connectionSource, TagEntity.class,true);
+            TableUtils.dropTable(connectionSource, FileEntity.class,true);
+            TableUtils.dropTable(connectionSource, RuleEntity.class,true);
             TableUtils.createTableIfNotExists(connectionSource, UserEntity.class);
             TableUtils.createTableIfNotExists(connectionSource, FileEntity.class);
             TableUtils.createTableIfNotExists(connectionSource, TagEntity.class);
@@ -343,7 +348,7 @@ public class SqliteHDDB implements HDDB {
 
     private static <T extends Identifiable> void createWithDao(Dao <T, Long> dao, T entity, String entityName, String expressiveValue) {
         try {
-            if(1 == dao.create(entity)){
+           if(1 == dao.create(entity)){
                 Log.i(LogTag.DB, entityName + " entity created ::"+expressiveValue);
             }else{
                 entity.setId(IdFailed);

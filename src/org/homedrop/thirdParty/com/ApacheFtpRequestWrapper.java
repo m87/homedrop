@@ -3,6 +3,7 @@ package org.homedrop.thirdParty.com;
 import org.apache.ftpserver.ftplet.FtpRequest;
 import org.homedrop.Command;
 import org.homedrop.Request;
+import org.homedrop.core.Default;
 
 import java.util.Map;
 
@@ -15,13 +16,16 @@ public class ApacheFtpRequestWrapper implements FtpRequestWrapper<FtpRequest>{
 
     @Override
     public String[] argsAsArray(String args) {
-        return null;
+        if(null == args){
+            return null;
+        }
+        return args.split(Default.ARG_SEP);
     }
 
     @Override
-    public Request from(FtpRequest req, String userName) {
+    public Request from(FtpRequest req, String userName, int special) {
         Command cmd = new Command(req.getCommand(), argsAsArray(req.getArgument()));
-        return new Request(cmd, userName);
+        return new Request(cmd, userName, special);
     }
 
     @Override
