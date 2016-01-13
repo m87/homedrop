@@ -26,8 +26,7 @@ public class FileEntity extends File {
     @DatabaseField(canBeNull = true)
     private long version;
 
-    @DatabaseField(canBeNull = false, dataType = DataType.DATE)
-    @DatabaseField(canBeNull = true, dataType = DataType.SERIALIZABLE)
+    @DatabaseField(canBeNull = true, dataType = DataType.DATE)
     private Date lastChange;
 
     @DatabaseField(canBeNull = true)
