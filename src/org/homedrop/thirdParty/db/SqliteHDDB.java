@@ -265,6 +265,45 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public void addRule(Rule rule) {
+        RuleEntity ruleAsEntity = (RuleEntity) rule;
+        createWithDao(ruleDao, ruleAsEntity, "Rule", "" + rule.getId());
+    }
+
+    @Override
+    public void updateRule(Rule rule) throws ItemNotFoundException {
+        RuleEntity ruleAsEntity = (RuleEntity) rule;
+        updateWithDao(ruleDao, ruleAsEntity, "Rule", "" + rule.getId());
+    }
+
+    @Override
+    public Rule getRuleById(long id) throws ItemNotFoundException {
+        Rule rule = getByIdFromDao(ruleDao, id, "Rule");
+        return rule;
+    }
+
+    @Override
+    public List<Rule> getValidRulesByFile(File file) {
+        List<Rule>validRules = new ArrayList<Rule>();
+        try {
+            Where<RuleEntity, Long> whereClause = ruleDao.queryBuilder().where();
+            Date today = new Date();
+            whereClause.and(
+                    whereClause.or(whereClause.isNull("file_id"), whereClause.eq("file_id", file.getId())),
+                    whereClause.or(whereClause.isNull("holdsSince"), whereClause.le("holdsSince", today)),
+                    whereClause.or(whereClause.isNull("holdsUntil"), whereClause.ge("holdsUntil", today)));
+            PreparedQuery<RuleEntity> preparedQuery = whereClause.prepare();
+            List<RuleEntity> temporary = ruleDao.query(preparedQuery);
+            validRules.addAll(temporary);
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get valid rules by file!]");
+            e.printStackTrace();
+        }
+        return validRules;
+    }
+
+    @Override
     public void assignTag(File file, Tag tag) {
         FileTagEntity fileTag = new FileTagEntity();
         fileTag.setFile((FileEntity) file);

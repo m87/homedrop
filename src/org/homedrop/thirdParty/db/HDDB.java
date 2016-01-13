@@ -155,6 +155,35 @@ public interface HDDB {
     Tag getTagById(long id) throws ItemNotFoundException;
 
     /**
+     * Add new rule to database. If success change rule id for created entity id.
+     * If fail change rule id for IdFailed
+     * @param rule
+     */
+    void addRule(Rule rule);
+
+    /**
+     * Update rule with id equal to id of given rule object.
+     * @param rule
+     * @throws ItemNotFoundException
+     */
+    void updateRule(Rule rule) throws ItemNotFoundException;
+
+    /**
+     * Get rule of given id.
+     * @param id
+     * @return Rule of given id
+     * @throws ItemNotFoundException
+     */
+    Rule getRuleById(long id) throws ItemNotFoundException;
+
+    /**
+     * Get all valid rules of given file
+     * @param file
+     * @return All valid rules of given file
+     */
+    List<Rule> getValidRulesByFile(File file);
+
+    /**
      * Assign tag to file
      * @param file
      * @param tag

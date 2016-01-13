@@ -2,7 +2,7 @@ package org.homedrop.core.model;
 
 import org.homedrop.core.utils.Identifiable;
 
-import java.sql.Date;
+import java.util.Date;
 
 public abstract class File implements Identifiable {
 
