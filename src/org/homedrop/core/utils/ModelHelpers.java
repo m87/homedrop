@@ -1,11 +1,13 @@
 package org.homedrop.core.utils;
 
 import org.homedrop.core.model.File;
+import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
-import org.homedrop.thirdParty.db.sqliteModels.UserEntity;
 
-import java.sql.Date;
+import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 public class ModelHelpers {
     public static void setUserFields(User user, String name, String password, String home) {
@@ -19,10 +21,19 @@ public class ModelHelpers {
         file.setName(name);
         file.setCheckSum(checkSum);
         file.setLastChange(lastChange);
-        file.setOwner((UserEntity) owner);
+        file.setOwner(owner);
         file.setPath(path);
         file.setType(type);
         file.setVersion(version);
+    }
+
+    public static void setRuleFields(Rule rule, String body, Date holdsSince,
+                                     Date holdsUntil, File file, User owner) {
+        rule.setBody(body);
+        rule.setHoldsSince(holdsSince);
+        rule.setHoldsUntil(holdsUntil);
+        rule.setFile(file);
+        rule.setOwner(owner);
     }
 
     public static boolean areItemsEqual(User user1, User user2) {
@@ -70,4 +81,30 @@ public class ModelHelpers {
         return file1.getVersion() == file2.getVersion();
     }
 
+    public static boolean areItemsEqual(Rule rule1, Rule rule2) {
+        if (rule1.getId() != rule2.getId()) {
+            return false;
+        }
+        if (false == rule1.getBody().equals(rule2.getBody())) {
+            return false;
+        }
+        if (false == areBothNullableItemsEqual(rule1.getHoldsSince(), rule2.getHoldsSince())) {
+            return false;
+        }
+        if (false == areBothNullableItemsEqual(rule1.getHoldsUntil(), rule2.getHoldsUntil())) {
+            return false;
+        }
+        if (false == areBothNullableItemsEqual(rule1.getFileId(), rule2.getFileId()))  {
+            return false;
+        }
+        return rule1.getOwnerId() == rule2.getOwnerId();
+    }
+
+    public static <T> boolean areBothNullableItemsEqual(T item1, T item2) {
+        return ((null == item1) && (null == item2)) || item1.equals(item2);
+    }
+
+    public static Date makeDateFromLocalDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
 }

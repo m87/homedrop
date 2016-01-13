@@ -6,7 +6,7 @@ import com.j256.ormlite.table.DatabaseTable;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.User;
 
-import java.sql.Date;
+import java.util.Date;
 
 @DatabaseTable(tableName = "files")
 public class FileEntity extends File {
@@ -26,7 +26,7 @@ public class FileEntity extends File {
     @DatabaseField(canBeNull = false)
     private long version;
 
-    @DatabaseField(canBeNull = false, dataType = DataType.SERIALIZABLE)
+    @DatabaseField(canBeNull = false, dataType = DataType.DATE)
     private Date lastChange;
 
     @DatabaseField(canBeNull = false)

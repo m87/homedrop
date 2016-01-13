@@ -5,6 +5,7 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.File;
+import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Identifiable;
@@ -17,13 +18,18 @@ import org.homedrop.thirdParty.db.sqliteModels.*;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +56,7 @@ public class SqliteHDDBTest {
         connectionSource = dependencyProvider.getDbConnectionSource();
         sqliteHDDB = new SqliteHDDB(connectionSource);
         areItemsEqualMethodsMap = new HashMap<Class, Method>();
-        for (Class theClass : new Class[] { User.class, Tag.class, File.class }){
+        for (Class theClass : new Class[] { User.class, Tag.class, File.class, Rule.class }){
             areItemsEqualMethodsMap.put(theClass, ModelHelpers.class
                     .getDeclaredMethod("areItemsEqual", theClass, theClass));
         }
@@ -103,7 +109,7 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllRules() throws Exception {
-
+        throw new NotImplementedException();
     }
 
     @Test
@@ -214,11 +220,13 @@ public class SqliteHDDBTest {
                 new FileEntity(),
                 new FileEntity()
         };
-        ModelHelpers.setFileFields(files[0], "fileName", 5621, Date.valueOf("2016-01-05"),
+        Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
+        Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
+        ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
                 owners[0], "testpath/", File.FileType.File, 2);
-        ModelHelpers.setFileFields(files[1], "fileName2", 113, Date.valueOf("2016-01-04"),
+        ModelHelpers.setFileFields(files[1], "fileName2", 113, firstDate,
                 owners[0], "testpath/", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[2], "fileName", 585, Date.valueOf("2016-01-05"),
+        ModelHelpers.setFileFields(files[2], "fileName", 585, secondDate,
                 owners[1], "testpath2/", File.FileType.File, 4);
 
         for (File file : files) {
@@ -316,7 +324,6 @@ public class SqliteHDDBTest {
 
         sqliteHDDB.updateUser(notExistingUser);
     }
-
 
     @Test
     public void testGetUserByName() throws Exception {
@@ -423,6 +430,84 @@ public class SqliteHDDBTest {
             sqliteHDDB.addTag(tag);
         }
         return tags;
+    }
+
+    @Test
+    public void testAddRule() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        assertCollectionIsConsistentWithDb(rules, Rule.class, "Id");
+    }
+
+    @Test
+    public void testUpdateRule() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+        rules[0].setFile(files[1]);
+        rules[0].setOwner(owners[1]);
+        rules[0].setBody("{field: value}");
+
+        sqliteHDDB.updateRule(rules[0]);
+
+        assertCollectionIsConsistentWithDb(rules, Rule.class, "Id");
+    }
+
+    @Test
+    public void testGetValidRulesByFile() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        Map<File, Rule[]> expectedRulesForFileMap = new HashMap<>();
+        expectedRulesForFileMap.put(files[0], new Rule[] { rules[0], rules[5] });
+        expectedRulesForFileMap.put(files[1], new Rule[] { rules[5] });
+        expectedRulesForFileMap.put(files[2], new Rule[] { rules[3], rules[4], rules[5] });
+
+        for (Map.Entry<File, Rule[]> expectedRulesForFile : expectedRulesForFileMap.entrySet()) {
+            List<Rule> actualRulesForFile = sqliteHDDB.getValidRulesByFile(expectedRulesForFile.getKey());
+
+            assertEquals(expectedRulesForFile.getValue().length, actualRulesForFile.size());
+            for (Rule expectedRule : expectedRulesForFile.getValue()) {
+                TestHelpers.assertListContainsItemEqual(actualRulesForFile, expectedRule);
+            }
+        }
+    }
+
+    public Rule[] prepareRulesForTest(User[] owners, File[] files) {
+        Rule[] rules = {
+                new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity(),
+        };
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+
+        Date validHoldsSince = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-01", formatter));
+        Date invalidHoldsUntil = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-03", formatter));
+        ModelHelpers.setRuleFields(rules[0], "{}", validHoldsSince,
+                                   null, files[0], owners[0]);
+        ModelHelpers.setRuleFields(rules[1], "{}", validHoldsSince,
+                                   invalidHoldsUntil, files[0], owners[0]);
+        ModelHelpers.setRuleFields(rules[2], "{}", validHoldsSince,
+                                   invalidHoldsUntil, files[1], owners[0]);
+        Date tomorrow = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().plusDays(1).toLocalDate());
+        ModelHelpers.setRuleFields(rules[3], "{}", null,
+                                   tomorrow, files[2], owners[0]);
+        Date yesterday = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().minusDays(1).toLocalDate());
+        ModelHelpers.setRuleFields(rules[4], "{}", yesterday,
+                                   tomorrow, files[2], owners[0]);
+        ModelHelpers.setRuleFields(rules[5], "{}", yesterday,
+                tomorrow, null, owners[0]);
+        for (Rule rule : rules) {
+            sqliteHDDB.addRule(rule);
+        }
+        return rules;
     }
 
     @Test
