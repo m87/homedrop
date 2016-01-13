@@ -65,6 +65,13 @@ public interface HDDB {
     List<File> getFilesByPath(String path);
 
     /**
+     * Get all files of given parent path.
+     * @param path
+     * @return All files of given path
+     */
+    List<File> getFilesByParentPath(String path);
+
+    /**
      * Get file of given id
      * @param id
      * @return File of given id

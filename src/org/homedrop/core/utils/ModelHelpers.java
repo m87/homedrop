@@ -17,11 +17,12 @@ public class ModelHelpers {
     }
 
     public static void setFileFields(File file, String name, long checkSum, Date lastChange,
-                                     User owner, String path, File.FileType type, long version) {
+                                     User owner, String parentPath, String path, File.FileType type, long version) {
         file.setName(name);
         file.setCheckSum(checkSum);
         file.setLastChange(lastChange);
         file.setOwner(owner);
+        file.setParentPath(parentPath);
         file.setPath(path);
         file.setType(type);
         file.setVersion(version);
@@ -70,6 +71,9 @@ public class ModelHelpers {
             return false;
         }
         if (file1.getOwnerId() != file2.getOwnerId()) {
+            return false;
+        }
+        if (false == file1.getParentPath().equals(file2.getParentPath())) {
             return false;
         }
         if (false == file1.getPath().equals(file2.getPath())) {

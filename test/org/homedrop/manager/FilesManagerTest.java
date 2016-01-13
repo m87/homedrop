@@ -40,9 +40,9 @@ public class FilesManagerTest {
         when(dbMock.getUserByName(user.getName())).thenReturn(user);
         File[] filesByPath = { new FileEntity(), new FileEntity() };
         ModelHelpers.setFileFields(filesByPath[0], "fileName", 5621, Date.valueOf("2016-01-05"),
-                user, "testpath/", File.FileType.File, 2);
+                user, "test_parent_path", "testpath/", File.FileType.File, 2);
         ModelHelpers.setFileFields(filesByPath[1], "fileName2", 113, Date.valueOf("2016-01-04"),
-                user, "testpath/", File.FileType.File, 1);
+                user, "test_parent_path", "testpath/", File.FileType.File, 1);
         List<File> expectedFilesByPath = Arrays.asList(filesByPath);
         String path = "example_path";
         when(dbMock.getFilesByPath(Paths.get(user.getHome(), path).toString())).thenReturn(expectedFilesByPath);
@@ -66,8 +66,6 @@ public class FilesManagerTest {
 
         assertEquals(0, actualFilesByPath.size());
     }
-
-
 
     @Test
     public void testGetHome() throws Exception {

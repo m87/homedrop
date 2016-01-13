@@ -18,7 +18,6 @@ import org.homedrop.thirdParty.db.sqliteModels.*;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.*;
@@ -109,7 +108,16 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllRules() throws Exception {
-        throw new NotImplementedException();
+        User[] users = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(users, files);
+
+        List<Rule> allRules = sqliteHDDB.getAllRules();
+
+        assertEquals(rules.length, allRules.size());
+        for (Rule expectedRule : rules) {
+            TestHelpers.assertListContainsItemEqual(allRules, expectedRule);
+        }
     }
 
     @Test
@@ -213,6 +221,28 @@ public class SqliteHDDBTest {
         assertEquals(0, actualFiles.size());
     }
 
+    @Test
+    public void testGetFilesByParentPath() throws Exception {
+        File[] files = prepareFilesForTest();
+        File[] expectedFiles = { files[0], files[2] };
+
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("test_parent_path1");
+
+        assertEquals(expectedFiles.length, actualFiles.size());
+        for (File expectedFile : expectedFiles) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
+    }
+
+    @Test
+    public void testGetFilesByParentPathWhenFileDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("notExistingPath");
+
+        assertEquals(0, actualFiles.size());
+    }
+
     public File[] prepareFilesForTest() {
         User[] owners = prepareUsersForTest();
         FileEntity[] files = {
@@ -223,11 +253,11 @@ public class SqliteHDDBTest {
         Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
         Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
         ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "testpath/", File.FileType.File, 2);
+                owners[0], "test_parent_path1", "testpath/", File.FileType.File, 2);
         ModelHelpers.setFileFields(files[1], "fileName2", 113, firstDate,
-                owners[0], "testpath/", File.FileType.File, 1);
+                owners[0], "test_parent_path2", "testpath/", File.FileType.File, 1);
         ModelHelpers.setFileFields(files[2], "fileName", 585, secondDate,
-                owners[1], "testpath2/", File.FileType.File, 4);
+                owners[1], "test_parent_path1", "testpath2/", File.FileType.File, 4);
 
         for (File file : files) {
             sqliteHDDB.addFile(file);

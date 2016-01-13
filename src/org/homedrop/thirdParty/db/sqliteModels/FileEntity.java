@@ -18,6 +18,9 @@ public class FileEntity extends File {
     private String name;
 
     @DatabaseField(canBeNull = false)
+    private String parentPath;
+
+    @DatabaseField(canBeNull = false)
     private String path;
 
     @DatabaseField(canBeNull = true)
@@ -52,6 +55,11 @@ public class FileEntity extends File {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getParentPath() {
+        return parentPath;
+    }
+    public void setParentPath(String parentPath) { this.parentPath = parentPath; }
 
     public String getPath() {
         return path;

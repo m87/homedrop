@@ -84,7 +84,8 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<Rule> getAllRules() {
-        return null;
+        List allRules = getAllFromDao(ruleDao);
+        return allRules;
     }
 
     private static <T> List<T> getAllFromDao(Dao <T, Long> dao) {
@@ -142,6 +143,12 @@ public class SqliteHDDB implements HDDB {
     public List<File> getFilesByPath(String path) {
         List<File> filesWithPath = getFilesByField(path, "path");
         return filesWithPath;
+    }
+
+    @Override
+    public List<File> getFilesByParentPath(String parentPath) {
+        List<File> filesWithParentPath = getFilesByField(parentPath, "parentPath");
+        return filesWithParentPath;
     }
 
     private List<File> getFilesByField(String fieldValue, String fieldName) {
