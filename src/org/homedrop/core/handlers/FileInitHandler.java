@@ -25,17 +25,21 @@ public class FileInitHandler extends CommandHandler{
 
         java.io.File file = null;
         try {
-            Path p = Paths.get(Default.MAIN_TMP, Default.BUF_TMP, request.getCommand().getArgs()[0]);
-            file = new java.io.File(FilesManager.getInstance().getTmpPath(request.getUserName(),p.toString()));
-            if(file.getParentFile() != null){
-                file.getParentFile().mkdirs();
-        }
+            //path to session folder
+            Path p = Paths.get(Default.META_TMP, "s"+String.valueOf(request.getSpecialKey()));
+            Path pb = Paths.get(FilesManager.getInstance().getHDPath(request.getUserName(),Default.BUF_TMP),"s"+String.valueOf(request.getSpecialKey()));
+            //create file representation
+            file = new java.io.File(FilesManager.getInstance().getHDPath(request.getUserName(),p.toString()));
+            //create dir sessionid with parents
+            file.mkdirs();
+            pb.toFile().mkdirs();
+
         } catch (ItemNotFoundException e) {
             Log.d(LogTag.DB, e.getMessage() + " home");
             return new Result(Result.ERROR, "error");
 
         }
-
+        //return session id
         return new Result(Result.OK, String.valueOf(request.getSpecialKey()));
     }
 }

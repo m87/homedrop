@@ -1,9 +1,12 @@
 package org.homedrop.manager;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.EmptyFileFilter;
+import org.homedrop.Commons;
 import org.homedrop.MetaFile;
+import org.homedrop.MetaPackage;
 import org.homedrop.core.Default;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.File;
@@ -19,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -82,43 +86,63 @@ public class FilesManager implements LifeCycle{
         return home;
     }
 
-    public String getTmpPath(String userName, String path) throws ItemNotFoundException {
-        Path p = Paths.get(getHome(userName), Default.MAIN_TMP, Default.BUF_TMP, path);
+    public String getHDPath(String userName, String path) throws ItemNotFoundException {
+        Path p = Paths.get(getHome(userName), Default.MAIN_TMP, path);
         return p.toString();
     }
 
 
-    public boolean createDirsFromMeta(String userName, MetaFile file, int specialKey){
-        if(!file.isDir) //return true;
-        {
-try {
-            String home = getHome(userName);
-            Path tmp = Paths.get(home, Default.MAIN_TMP, Default.BUF_TMP, file.path + "." + String.valueOf(specialKey));
+    public boolean prepare(MetaPackage metaPackage, String userName, int specialKey){
 
-            java.io.File tmpFile = tmp.toFile();
-            tmpFile.createNewFile();
+        List<MetaFile> files = Arrays.asList(metaPackage.files);
 
-
-
-        } catch (ItemNotFoundException e) {
-            return false;
-        } catch (IOException e) {
-}
+        for(MetaFile file : files){
+            if(file.fileTransfered) {
+                createDirsFromMeta(userName, file, specialKey, false);
+            }
         }
+        return true;
+    }
+
+    public boolean process(MetaPackage metaPackage, String userName, int specialKey){
+
+        List<MetaFile> files = Arrays.asList(metaPackage.files);
+
+            for(MetaFile file : files){
+                if(file.fileTransfered) {
+                    newFileFromMeta(userName, file, specialKey);
+                }else{
+                    editFileFromMeta(userName, file, specialKey);
+                }
+            }
+        return true;
+    }
+
+    public boolean clean(MetaPackage metaPackage){
+
+        return true;
+    }
+
+
+    public boolean editFileFromMeta(String userName, MetaFile file, int specialKey){
+
+        return true;
+    }
+
+
+    public boolean createDirsFromMeta(String userName, MetaFile file, int specialKey, boolean realLocation){
+        if(!file.isDir) return true;
 
         try {
             String home = getHome(userName);
-            Path tmp = Paths.get(home, Default.MAIN_TMP, Default.BUF_TMP, file.path);
-            Path real =Paths.get(home, file.path);
-
-            java.io.File tmpFile = tmp.toFile();
-            java.io.File realFile = real.toFile();
-
-            if(tmpFile.getParentFile()!=null){
-                tmpFile.getParentFile().mkdirs();
-            }
-            if(realFile.getParentFile()!=null){
-                realFile.getParentFile().mkdirs();
+            if(!realLocation) {
+                Path tmp = Paths.get(home, Default.MAIN_TMP, Default.BUF_TMP, "s"+String.valueOf(specialKey) ,file.path);
+                java.io.File tmpFile = tmp.toFile();
+                tmpFile.mkdirs();
+            }else {
+                Path real = Paths.get(home, file.path);
+                java.io.File realFile = real.toFile();
+                realFile.mkdirs();
             }
 
 
@@ -130,26 +154,35 @@ try {
         return true;
     }
 
-    public boolean addFileFromMeta(String userName, MetaFile file, int specialKey) {
-        if(file.isDir) return true;
+    public boolean newFileFromMeta(String userName, MetaFile file, int specialKey) {
+        if(file.isDir) {
+            createDirsFromMeta(userName,file,specialKey,true);
+            return true;
+        }
         try{
-        String path = file.path;
-        Path p = Paths.get(getHome(userName), path);
-        java.io.File f = p.toFile();
+            String path = file.path;
+            Path p = Paths.get(getHome(userName), path);
+            java.io.File f = p.toFile();
 
-        File entity = new FileEntity();
-        entity.setName(f.getName());
-        entity.setParentPath(DBHelper.formatPath(f.getParent()));
-        entity.setPath(DBHelper.formatPath(f.getPath()));
-        entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
+            File entity = new FileEntity();
+            entity.setName(f.getName());
+            entity.setParentPath(DBHelper.formatPath(f.getParent()));
+            entity.setPath(DBHelper.formatPath(f.getPath()));
+            entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
+            if(file.isDir){
+                entity.setType(File.FileType.Directory);
+            }else{
+                entity.setType(File.FileType.File);
+            }
 
-        p = Paths.get(getHome(userName), Default.MAIN_TMP, Default.BUF_TMP, path+"."+String.valueOf(specialKey));
-        Path pdst = Paths.get(getHome(userName), path);
-        java.io.File src = p.toFile();
-        java.io.File dst = pdst.toFile();
-            FileUtils.deleteQuietly(dst); //TODO <<<<<<<<<<<<<<<<<<<<<<
-            FileUtils.moveFile(src, dst);
-            DBManager.getInstance().getDb().addFile(entity);
+
+            p = Paths.get(getHome(userName), Default.MAIN_TMP, Default.BUF_TMP,"s"+String.valueOf(specialKey), path);
+            Path pdst = Paths.get(getHome(userName), path);
+            java.io.File src = p.toFile();
+            java.io.File dst = pdst.toFile();
+                FileUtils.deleteQuietly(dst); //TODO <<<<<<<<<<<<<<<<<<<<<<
+                FileUtils.moveFile(src, dst);
+                DBManager.getInstance().getDb().addFile(entity);
 
         } catch (IOException e) {
             Log.d(LogTag.DEV, "cannot move file");

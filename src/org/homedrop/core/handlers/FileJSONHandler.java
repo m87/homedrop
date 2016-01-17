@@ -2,6 +2,7 @@ package org.homedrop.core.handlers;
 
 import org.apache.commons.io.FileUtils;
 import org.homedrop.*;
+import org.homedrop.core.Default;
 import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -12,8 +13,8 @@ import org.homedrop.manager.FilesManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileJSONHandler extends CommandHandler{
     /**
@@ -23,6 +24,13 @@ public class FileJSONHandler extends CommandHandler{
         super(request);
     }
 
+
+    /**
+     * request.getCommand().getArgs()[0] - relative path to json in .HD_hd_HD/.HD_meta_HD
+     * @param request request has to represent same command
+     * @return
+     * @throws HandlerException
+     */
     @Override
     public Result handle(Request request) throws HandlerException {
         String pathJson = DBHelper.formatPath(request.getCommand().getArgs()[0]);
@@ -30,15 +38,14 @@ public class FileJSONHandler extends CommandHandler{
         FilesManager fm = FilesManager.getInstance();
 
         try {
-            pathJson = fm.getTmpPath(request.getUserName(), pathJson);
+            Path p = Paths.get(Default.META_TMP, pathJson);
+            pathJson = fm.getHDPath(request.getUserName(), p.toString());
 
             String json = FileUtils.readFileToString(new File(pathJson));
             MetaPackage metaPackage = JSONConverter.toPackage(json);
-            List<MetaFile> files = Arrays.asList(metaPackage.files);
 
-            for(MetaFile file : files){
-                fm.createDirsFromMeta(request.getUserName(),file,request.getSpecialKey()); //real after receive
-            }
+            FilesManager.getInstance().prepare(metaPackage, request.getUserName(), request.getSpecialKey());
+
 
 
         } catch (ItemNotFoundException e) {
