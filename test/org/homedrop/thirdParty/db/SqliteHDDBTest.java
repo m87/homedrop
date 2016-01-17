@@ -26,12 +26,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.util.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.*;
@@ -43,7 +40,7 @@ public class SqliteHDDBTest {
     static JdbcConnectionSource connectionSource;
 
     static Map<Class, Method> areItemsEqualMethodsMap;
-    static Map<String, Class> fieldTypesMap;
+    static Map<String, Class[]> fieldTypesMap;
 
     @BeforeClass
     static public void setUpTest() throws Exception {
@@ -59,9 +56,10 @@ public class SqliteHDDBTest {
             areItemsEqualMethodsMap.put(theClass, ModelHelpers.class
                     .getDeclaredMethod("areItemsEqual", theClass, theClass));
         }
-        fieldTypesMap = new HashMap<String, Class>();
-        fieldTypesMap.put("Id", Long.TYPE);
-        fieldTypesMap.put("Name", String.class);
+        fieldTypesMap = new HashMap<String, Class[]>();
+        fieldTypesMap.put("Id", new Class[] { Long.TYPE });
+        fieldTypesMap.put("Name", new Class[] { String.class });
+        fieldTypesMap.put("Path", new Class[] { String.class, User.class });
     }
 
     @After
@@ -200,25 +198,24 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testGetFilesByPath() throws Exception {
+    public void testGetFileByPath() throws Exception {
         File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[1] };
-
-        List<File> actualFiles = sqliteHDDB.getFilesByPath("testpath/");
-
-        assertEquals(expectedFiles.length, actualFiles.size());
-        for (File expectedFile : expectedFiles) {
-            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
-        }
+        String[] fieldNames = new String[] {"Path", "Owner"};
+        assertCollectionIsConsistentWithDb(files, File.class, fieldNames);
     }
 
-    @Test
-    public void testGetFilesByPathWhenFileDoesNotExist() throws Exception {
+    @Test(expected = ItemNotFoundException.class)
+    public void testGetFileByPathWhenFileDoesNotOccur() throws Exception {
         File[] files = prepareFilesForTest();
+        sqliteHDDB.getFileByPath("notExistingPath", files[0].getOwner());
+    }
 
-        List<File> actualFiles = sqliteHDDB.getFilesByPath("notExistingPath");
-
-        assertEquals(0, actualFiles.size());
+    @Test(expected = ItemNotFoundException.class)
+    public void testGetFileByPathWhenOwnerDoesNotOccur() throws Exception {
+        File[] files = prepareFilesForTest();
+        User notExistingOwner = files[2].getOwner();
+        notExistingOwner.setId(9999);
+        sqliteHDDB.getFileByPath(files[1].getPath(), notExistingOwner);
     }
 
     @Test
@@ -255,9 +252,9 @@ public class SqliteHDDBTest {
         ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
                 owners[0], "test_parent_path1", "testpath/", File.FileType.File, 2);
         ModelHelpers.setFileFields(files[1], "fileName2", 113, firstDate,
-                owners[0], "test_parent_path2", "testpath/", File.FileType.File, 1);
+                owners[0], "test_parent_path2", "testpath2/", File.FileType.File, 1);
         ModelHelpers.setFileFields(files[2], "fileName", 585, secondDate,
-                owners[1], "test_parent_path1", "testpath2/", File.FileType.File, 4);
+                owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);
 
         for (File file : files) {
             sqliteHDDB.addFile(file);
@@ -302,13 +299,24 @@ public class SqliteHDDBTest {
     }
 
     public void assertCollectionIsConsistentWithDb(Identifiable[] items, Class itemType, String getterFieldName) throws Exception {
+        assertCollectionIsConsistentWithDb(items, itemType, new String[] {getterFieldName});
+    }
+
+    public void assertCollectionIsConsistentWithDb(Identifiable[] items, Class itemType, String[] getterFieldNames) throws Exception {
         Method getByFieldMethod = SqliteHDDB.class
-                .getDeclaredMethod("get" + itemType.getSimpleName() + "By" + getterFieldName, fieldTypesMap.get(getterFieldName));
-        Method getFieldFromItemMethod = itemType.getMethod("get" + getterFieldName);
+                .getDeclaredMethod("get" + itemType.getSimpleName() + "By" + getterFieldNames[0], fieldTypesMap.get(getterFieldNames[0]));
+        List<Method> getFieldFromItemMethods = new ArrayList<>();
+        for (String getterFieldName : getterFieldNames) {
+            getFieldFromItemMethods.add(itemType.getMethod("get" + getterFieldName));
+        }
         Method areFieldsEqualMethod = areItemsEqualMethodsMap.get(itemType);
         for (Identifiable expectedItem : items) {
-            Object expectedFieldValue = getFieldFromItemMethod.invoke(expectedItem);
-            Identifiable actualItem = (Identifiable) getByFieldMethod.invoke(sqliteHDDB, expectedFieldValue);
+            List<Object> expectedFieldValues = new ArrayList<>();
+            for (Method getFieldFromItemMethod : getFieldFromItemMethods) {
+                Object fieldValue = getFieldFromItemMethod.invoke(expectedItem);
+                expectedFieldValues.add(fieldValue);
+            }
+            Identifiable actualItem = (Identifiable) getByFieldMethod.invoke(sqliteHDDB, expectedFieldValues.toArray());
             assertTrue((boolean)areFieldsEqualMethod.invoke(null, expectedItem, actualItem));
         }
     }

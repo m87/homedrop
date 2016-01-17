@@ -58,18 +58,19 @@ public interface HDDB {
     List<File> getFilesByName(String name);
 
     /**
-     * Get all files of given path.
-     * @param path
-     * @return All files of given path
-     */
-    List<File> getFilesByPath(String path);
-
-    /**
      * Get all files of given parent path.
      * @param path
      * @return All files of given path
      */
     List<File> getFilesByParentPath(String path);
+
+    /**
+     * Get file of given path.
+     * @param path
+     * @param owner - path is relative, so it's unique for user
+     * @return File of given path
+     */
+    File getFileByPath(String path, User owner) throws ItemNotFoundException;
 
     /**
      * Get file of given id

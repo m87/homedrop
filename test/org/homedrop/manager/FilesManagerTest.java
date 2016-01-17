@@ -45,7 +45,7 @@ public class FilesManagerTest {
                 user, "test_parent_path", "testpath/", File.FileType.File, 1);
         List<File> expectedFilesByPath = Arrays.asList(filesByPath);
         String path = "example_path";
-        when(dbMock.getFilesByPath(Paths.get(user.getHome(), path).toString())).thenReturn(expectedFilesByPath);
+        when(dbMock.getFilesByParentPath(Paths.get(user.getHome(), path).toString())).thenReturn(expectedFilesByPath);
 
         List<File> actualFilesByPath = FilesManager.getInstance().list(user.getName(), path);
 

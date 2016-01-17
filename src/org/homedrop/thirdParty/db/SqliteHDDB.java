@@ -141,12 +141,6 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public List<File> getFilesByPath(String path) {
-        List<File> filesWithPath = getFilesByField(DBHelper.formatPath(path), "path");
-        return filesWithPath;
-    }
-
-    @Override
     public List<File> getFilesByParentPath(String parentPath) {
         List<File> filesWithParentPath = getFilesByField(DBHelper.formatPath(parentPath), "parentPath");
         return filesWithParentPath;
@@ -164,6 +158,17 @@ public class SqliteHDDB implements HDDB {
             filesWithFieldValue = new ArrayList<>();
         }
         return filesWithFieldValue;
+    }
+
+    @Override
+    public File getFileByPath(String path, User owner) throws ItemNotFoundException {
+        List<File> filesWithPath = getFilesByField(path, "path");
+        for (File fileWithPath : filesWithPath) {
+            if (fileWithPath.getOwnerId() == owner.getId()) {
+                return fileWithPath;
+            }
+        }
+        throw new ItemNotFoundException("");
     }
 
     @Override
