@@ -11,6 +11,7 @@ import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.ReportHelper;
 import org.homedrop.core.utils.exceptions.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
+import org.homedrop.manager.FilesManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class DelHandler extends CommandHandler{
     @Override
     public Result handle(Request request) throws HandlerException{
         try {
-            FileUtils.deleteQuietly(new File(DBHelper.mapUserPathAsString(request.getUserName(), request.getCommand().getArgs()[0])));
+            FilesManager.getInstance().delete(request.getUserName(),request.getCommand().getArgs()[0]);
         } catch (ItemNotFoundException e) {
             Log.d(LogTag.DB, e.getMessage());
             return new Result(Result.ERROR, "");

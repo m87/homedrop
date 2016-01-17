@@ -12,6 +12,7 @@ import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.thirdParty.db.HDDB;
+import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.homedrop.thirdParty.db.sqliteModels.FileEntity;
 
 import java.io.IOException;
@@ -29,6 +30,13 @@ public class FilesManager implements LifeCycle{
     }
 
     private FilesManager() {
+    }
+
+
+    public boolean delete(String userName, String path) throws ItemNotFoundException {
+        FileUtils.deleteQuietly(new java.io.File(DBHelper.mapUserPathAsString(userName, path)));
+
+        return true;
     }
 
     public boolean removeList(String userName, String path) throws ItemNotFoundException{
