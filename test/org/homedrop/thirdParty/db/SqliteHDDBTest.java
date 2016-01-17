@@ -550,6 +550,22 @@ public class SqliteHDDBTest {
         }
     }
 
+    @Test
+    public void testDeleteRule() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+        deleteItemTestTemplate(rules, Rule.class);
+    }
+
+    @Test
+    public void testDeleteRuleById() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+        deleteItemByIdTestTemplate(rules, Rule.class);
+    }
+
     public Rule[] prepareRulesForTest(User[] owners, File[] files) {
         Rule[] rules = {
                 new RuleEntity(),

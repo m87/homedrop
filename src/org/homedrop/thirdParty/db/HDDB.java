@@ -143,7 +143,7 @@ public interface HDDB {
     void deleteTag(Tag tag) throws ItemNotFoundException;
 
     /**
-     * Update tag with id equal to id of given tag object.
+     * Delete tag with id equal to id of given tag object.
      * @param id
      */
     void deleteTagById(long id) throws ItemNotFoundException;
@@ -191,6 +191,20 @@ public interface HDDB {
      * @throws ItemNotFoundException
      */
     Rule getRuleById(long id) throws ItemNotFoundException;
+
+    /**
+     * Delete rule with id equal to id of given rule object.
+     * @param rule
+     * @throws ItemNotFoundException
+     */
+    void deleteRule(Rule rule) throws ItemNotFoundException;
+
+    /**
+     * Delete rule with given id from database.
+     * @param id
+     * @throws ItemNotFoundException
+     */
+    void deleteRuleById(long id) throws ItemNotFoundException;
 
     /**
      * Get all valid rules of given file

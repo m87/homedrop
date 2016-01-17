@@ -303,6 +303,16 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public void deleteRule(Rule rule) throws ItemNotFoundException {
+        deleteRuleById(rule.getId());
+    }
+
+    @Override
+    public void deleteRuleById(long id) throws ItemNotFoundException {
+        deleteByIdFromDao(ruleDao, id, "Rule");
+    }
+
+    @Override
     public List<Rule> getValidRulesByFile(File file) {
         List<Rule>validRules = new ArrayList<Rule>();
         try {
