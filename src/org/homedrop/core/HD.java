@@ -7,6 +7,9 @@ public class HD {
     public static final String DEL = "HD_DEL";
 
     public static final String FILE = "HD_FILE";
+    public static final String FILE_JSON = "HD_FILE_JSON";
+    public static final String FILE_INIT = "HD_FILE_INIT";
+    public static final String FILE_R = "HD_FILE_R";
 
 
 

@@ -91,14 +91,7 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
 
 
 
-/*
-            SslConfigurationFactory ssl = new SslConfigurationFactory();
-            ssl.setKeystoreFile(new File("/home/rt/ftpserver.jks"));
-            ssl.setKeystorePassword("password");
-// set the SSL configuration for the listener
-            listenerFactory.setSslConfiguration(ssl.createSslConfiguration());
-            listenerFactory.setImplicitSsl(true);
-*/
+
             ApacheFtpRequestWrapper wrapper = new ApacheFtpRequestWrapper();
             serverFactory.addListener("default", listenerFactory.createListener());
 
@@ -120,13 +113,17 @@ PropertiesUserManagerFactory userManagerFactory = new PropertiesUserManagerFacto
                         return FtpletResult.DEFAULT;
                     }
                     Result result = CommandManager.getInstance().beforeCommand(wrapper.from(ftpRequest, ftpSession.getUser().getName(), ftpSession.getSessionId().hashCode()));
+
                     System.out.println(ftpRequest.getCommand());
                     System.out.println(ftpRequest.getArgument());
                     System.out.println(result.getCode());
                     if(result.getCode() != Result.UNSUPPORTED) {
+                        System.out.println(ftpRequest.getCommand()+" #######################");
                         ftpSession.write(new DefaultFtpReply(FtpReply.REPLY_211_SYSTEM_STATUS_REPLY, result.getMessage()));
                         return FtpletResult.SKIP;
                     }
+
+                    System.out.println(ftpRequest.getCommand()+" <<<<<<<<<<<<<<<<<<<<<");
 
                     return FtpletResult.DEFAULT;
 

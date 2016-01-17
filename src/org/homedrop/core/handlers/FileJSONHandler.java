@@ -1,7 +1,6 @@
 package org.homedrop.core.handlers;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.homedrop.*;
 import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
@@ -13,32 +12,32 @@ import org.homedrop.manager.FilesManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-public class FileHandler extends CommandHandler{
-
-    public FileHandler(Request request){
+public class FileJSONHandler extends CommandHandler{
+    /**
+     * @param request Request, which invoked creation
+     */
+    public FileJSONHandler(Request request) {
         super(request);
     }
 
     @Override
-    public Result handle(Request request) throws HandlerException{
-        //String pathJson = DBHelper.formatPath(request.getCommand().getArgs()[0])+".json."+String.valueOf(request.getSpecialKey());
+    public Result handle(Request request) throws HandlerException {
         String pathJson = DBHelper.formatPath(request.getCommand().getArgs()[0]);
 
         FilesManager fm = FilesManager.getInstance();
+
         try {
             pathJson = fm.getTmpPath(request.getUserName(), pathJson);
-
 
             String json = FileUtils.readFileToString(new File(pathJson));
             MetaPackage metaPackage = JSONConverter.toPackage(json);
             List<MetaFile> files = Arrays.asList(metaPackage.files);
 
             for(MetaFile file : files){
-                fm.addFileFromMeta(request.getUserName(), file, request.getSpecialKey());
+                fm.createDirsFromMeta(request.getUserName(),file,request.getSpecialKey()); //real after receive
             }
 
 
@@ -51,10 +50,5 @@ public class FileHandler extends CommandHandler{
         }
 
         return new Result(Result.OK, "ok");
-    }
-
-    @Override
-    public Result handle() throws HandlerException {
-        return  handle(getRequest());
     }
 }

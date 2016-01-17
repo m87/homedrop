@@ -24,7 +24,7 @@ public class ApacheFtpRequestWrapper implements FtpRequestWrapper<FtpRequest>{
 
     @Override
     public Request from(FtpRequest req, String userName, int special) {
-        Command cmd = new Command(req.getCommand(), argsAsArray(req.getArgument()));
+        Command cmd = new Command(req.getCommand(), /*argsAsArray(*/new String[]{req.getArgument()}/*)*/);
         return new Request(cmd, userName, special);
     }
 

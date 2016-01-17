@@ -22,6 +22,18 @@ public class DBHelper {
         return Paths.get(home, path);
     }
 
+    public static String removeHome(String userName, String path){
+        String home = null;
+        try {
+            home = DBManager.getInstance().getDb().getUserByName(userName).getHome();
+        } catch (ItemNotFoundException e) {
+            e.printStackTrace();
+        }
+        if(home.length()+1 >= path.length()){
+            return "~";
+        }
+        return path.substring(home.length()+1);
+    }
 
     public static String formatPath(String path){
         String tmp = path;

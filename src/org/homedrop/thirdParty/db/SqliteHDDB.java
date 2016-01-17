@@ -10,6 +10,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.*;
+import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -141,13 +142,13 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<File> getFilesByPath(String path) {
-        List<File> filesWithPath = getFilesByField(path, "path");
+        List<File> filesWithPath = getFilesByField(DBHelper.formatPath(path), "path");
         return filesWithPath;
     }
 
     @Override
     public List<File> getFilesByParentPath(String parentPath) {
-        List<File> filesWithParentPath = getFilesByField(parentPath, "parentPath");
+        List<File> filesWithParentPath = getFilesByField(DBHelper.formatPath(parentPath), "parentPath");
         return filesWithParentPath;
     }
 

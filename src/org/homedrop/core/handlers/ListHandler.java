@@ -5,6 +5,7 @@ import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.Default;
 import org.homedrop.core.model.File;
+import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.HandlerException;
@@ -55,7 +56,7 @@ public class ListHandler extends CommandHandler{
             Log.w(LogTag.HOMEDROP, "Couldn't create list file.[IOException]");
             e.printStackTrace();
         }
-        return new Result(Result.OK, path.toString());
+        return new Result(Result.OK, DBHelper.removeHome(request.getUserName(),path.toString()));
     }
 
     @Override
