@@ -65,6 +65,14 @@ public interface HDDB {
     List<File> getFilesByParentPath(String path);
 
     /**
+     * Get all files of given path prefix
+     * @param prefix
+     * @param owner - path is relative, we want files of specific user
+     * @return All files of given path prefix
+     */
+    List<File> getAllFilesByPathPrefix(String prefix, User owner);
+
+    /**
      * Get file of given path.
      * @param path
      * @param owner - path is relative, so it's unique for user

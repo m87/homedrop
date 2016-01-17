@@ -198,6 +198,42 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testGetAllFilesByPathPrefix() throws Exception {
+        File[] files = prepareFilesForTest();
+        File[] expectedFiles = { files[0], files[1] };
+
+        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", files[0].getOwner());
+
+        assertEquals(expectedFiles.length, actualFiles.size());
+        for (File expectedFile : expectedFiles) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        }
+
+        expectedFiles = new File[] { files[1] };
+        actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/location2/", files[1].getOwner());
+        assertEquals(expectedFiles.length, actualFiles.size());
+    }
+
+    @Test
+    public void testGetAllFilesByPathPrefixWhenPrefixDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("notExistingPrefix/", files[0].getOwner());
+
+        assertEquals(0, actualFiles.size());
+    }
+
+    @Test
+    public void testGetAllFilesByPathPrefixWhenOwnerDoesNotExist() throws Exception {
+        File[] files = prepareFilesForTest();
+        User notExistingOwner = files[2].getOwner();
+        notExistingOwner.setId(9999);
+        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", notExistingOwner);
+
+        assertEquals(0, actualFiles.size());
+    }
+
+    @Test
     public void testGetFileByPath() throws Exception {
         File[] files = prepareFilesForTest();
         String[] fieldNames = new String[] {"Path", "Owner"};
@@ -250,9 +286,9 @@ public class SqliteHDDBTest {
         Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
         Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
         ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "test_parent_path1", "testpath/", File.FileType.File, 2);
+                owners[0], "test_parent_path1", "testpath/location/", File.FileType.File, 2);
         ModelHelpers.setFileFields(files[1], "fileName2", 113, firstDate,
-                owners[0], "test_parent_path2", "testpath2/", File.FileType.File, 1);
+                owners[0], "test_parent_path2", "testpath/location2/", File.FileType.File, 1);
         ModelHelpers.setFileFields(files[2], "fileName", 585, secondDate,
                 owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);
 

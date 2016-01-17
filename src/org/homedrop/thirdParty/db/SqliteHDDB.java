@@ -141,12 +141,19 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public List<File> getAllFilesByPathPrefix(String prefix, User owner) {
+        List<File> filesWithPathPrefix = getFilesByField(owner.getId(), "owner_id");
+        filesWithPathPrefix.removeIf(file -> !file.getPath().startsWith(prefix));
+        return filesWithPathPrefix;
+    }
+
+    @Override
     public List<File> getFilesByParentPath(String parentPath) {
         List<File> filesWithParentPath = getFilesByField(DBHelper.formatPath(parentPath), "parentPath");
         return filesWithParentPath;
     }
 
-    private List<File> getFilesByField(String fieldValue, String fieldName) {
+    private List<File> getFilesByField(Object fieldValue, String fieldName) {
         List<File> filesWithFieldValue = new ArrayList<>();
         try {
             PreparedQuery<FileEntity> preparedQuery = fileDao.queryBuilder().where().eq(fieldName, fieldValue).prepare();
