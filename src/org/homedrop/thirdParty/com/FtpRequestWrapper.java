@@ -10,6 +10,6 @@ public interface FtpRequestWrapper<T> {
     Request from(T req, String userName, int special);
     T to(Request req);
 
-    Map<String, String> argsAsMap(String args);
+    Map<String, String[]> argsAsMap(String args);
     String[] argsAsArray(String args);
 }

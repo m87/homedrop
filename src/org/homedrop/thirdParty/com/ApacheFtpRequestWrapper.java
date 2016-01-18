@@ -6,12 +6,19 @@ import org.homedrop.Request;
 import org.homedrop.core.Default;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 /** Apache ftp request representation */
 public class ApacheFtpRequestWrapper implements FtpRequestWrapper<FtpRequest>{
     @Override
-    public Map<String, String> argsAsMap(String args) {
-        return null;
+    public Map<String, String[]> argsAsMap(String args) {
+        try {
+            Map<String, String[]> out = new TreeMap<>();
+            return out;
+        }catch (Exception e){
+            e.getMessage();
+            return null;
+        }
     }
 
     @Override

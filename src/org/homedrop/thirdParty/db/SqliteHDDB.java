@@ -153,6 +153,10 @@ public class SqliteHDDB implements HDDB {
         return filesWithParentPath;
     }
 
+    public boolean exists(String userName, String path){
+        return false;
+    }
+
     private List<File> getFilesByField(Object fieldValue, String fieldName) {
         List<File> filesWithFieldValue = new ArrayList<>();
         try {
