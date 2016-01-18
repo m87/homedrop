@@ -49,13 +49,14 @@ public class FilesManager implements LifeCycle{
 
     public List<File> list(String userName, String path) {
         List<File> out = new ArrayList<>();
-        try {
-            Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
-            Log.d(LogTag.DEV, p.toString());
-            out = DBManager.getInstance().getDb().getFilesByParentPath(p.toString());
-        } catch (ItemNotFoundException e) {
-            Log.d(LogTag.DB, "Could not retrieve user's home!");
-        }
+        //try {
+            //Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
+           // Log.d(LogTag.DEV, p.toString());
+            //TODO <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            out = DBManager.getInstance().getDb().getFilesByParentPath(path);
+        //} catch (ItemNotFoundException e) {
+        //    Log.d(LogTag.DB, "Could not retrieve user's home!");
+        //}
         return out;
     }
     public class EmptyFilter extends EmptyFileFilter{
@@ -142,6 +143,16 @@ public class FilesManager implements LifeCycle{
             }else {
                 Path real = Paths.get(home, file.path);
                 java.io.File realFile = real.toFile();
+                Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, new EmptyFilter(), new EmptyFilter());
+                for(java.io.File f : files){
+                    File entity = new FileEntity();
+                    entity.setName(f.getName());
+                    entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName,f.getParentFile().getAbsolutePath())));
+                    entity.setPath(DBHelper.formatPath(DBHelper.removeHome(userName,f.getAbsolutePath())));
+                    entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
+                    entity.setType(File.FileType.Directory);
+                    DBManager.getInstance().getDb().addFile(entity);
+                }
                 realFile.mkdirs();
             }
 
@@ -156,7 +167,8 @@ public class FilesManager implements LifeCycle{
 
     public boolean newFileFromMeta(String userName, MetaFile file, int specialKey) {
         if(file.isDir) {
-            createDirsFromMeta(userName,file,specialKey,true);
+                createDirsFromMeta(userName, file, specialKey, true);
+
             return true;
         }
         try{
@@ -169,11 +181,7 @@ public class FilesManager implements LifeCycle{
             entity.setParentPath(DBHelper.formatPath(f.getParent()));
             entity.setPath(DBHelper.formatPath(f.getPath()));
             entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
-            if(file.isDir){
-                entity.setType(File.FileType.Directory);
-            }else{
-                entity.setType(File.FileType.File);
-            }
+            entity.setType(File.FileType.File);
 
 
             p = Paths.get(getHome(userName), Default.MAIN_TMP, Default.BUF_TMP,"s"+String.valueOf(specialKey), path);

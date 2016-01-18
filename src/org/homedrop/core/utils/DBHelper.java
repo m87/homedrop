@@ -23,6 +23,7 @@ public class DBHelper {
     }
 
     public static String removeHome(String userName, String path){
+
         String home = null;
         try {
             home = DBManager.getInstance().getDb().getUserByName(userName).getHome();
@@ -30,7 +31,7 @@ public class DBHelper {
             e.printStackTrace();
         }
         if(home.length()+1 >= path.length()){
-            return "~";
+            return "/";
         }
         return path.substring(home.length()+1);
     }
