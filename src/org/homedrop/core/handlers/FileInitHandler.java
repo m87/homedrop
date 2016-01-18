@@ -1,18 +1,19 @@
 package org.homedrop.core.handlers;
 
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.Default;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.manager.FilesManager;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class FileInitHandler extends CommandHandler{
+public class FileInitHandler extends CommandHandler {
     /**
      * @param request Request, which invoked creation
      */

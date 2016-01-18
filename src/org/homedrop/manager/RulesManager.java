@@ -1,6 +1,8 @@
 package org.homedrop.manager;
 
+import org.homedrop.MetaFile;
 import org.homedrop.MetaRule;
+import org.homedrop.MetaSetting;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
@@ -34,6 +36,14 @@ public class RulesManager {
 
     }
     public void delete(Rule rule){
+    }
+
+    public void process(MetaFile file){
+
+    }
+
+    public void process(MetaSetting setting){
+
     }
 
 }

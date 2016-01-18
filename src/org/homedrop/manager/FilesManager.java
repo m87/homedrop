@@ -48,13 +48,13 @@ public class FilesManager implements LifeCycle{
             return FileUtils.deleteQuietly(new java.io.File(Paths.get(getHome(userName),path).toString()));
     }
 
-    public List<File> list(String userName, String path) {
+    public List<File> list(String userName, String args) {
         List<File> out = new ArrayList<>();
         //try {
             //Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
            // Log.d(LogTag.DEV, p.toString());
             //TODO <<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            out = DBManager.getInstance().getDb().getFilesByParentPath(path);
+            out = DBManager.getInstance().getDb().getFilesByParentPath(args);
         //} catch (ItemNotFoundException e) {
         //    Log.d(LogTag.DB, "Could not retrieve user's home!");
         //}
@@ -109,10 +109,14 @@ public class FilesManager implements LifeCycle{
 
             for(MetaFile file : files){
                 if(file.fileTransfered) {
-                    newFileFromMeta(userName, file, specialKey);
+                    processFileFromMetaTransfered(userName, file, specialKey);
                 }else{
-                    editFileFromMeta(userName, file, specialKey);
+                    //processFileFromMetaNotTransfered(userName, file, specialKey);
                 }
+                TagsManager.getInstance().process(file);
+                //RulesManager.getInstance().process(file.rules);
+                //RulesManager.getInstance().process();
+
             }
         return true;
     }
@@ -163,7 +167,7 @@ public class FilesManager implements LifeCycle{
         return true;
     }
 
-    public boolean newFileFromMeta(String userName, MetaFile file, int specialKey) {
+    public boolean processFileFromMetaTransfered(String userName, MetaFile file, int specialKey) {
         if(file.isDir) {
                 createDirsFromMeta(userName, file, specialKey, true);
 

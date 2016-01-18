@@ -6,7 +6,7 @@ import org.homedrop.core.Default;
 import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.core.utils.json.JSONConverter;
 import org.homedrop.manager.FilesManager;

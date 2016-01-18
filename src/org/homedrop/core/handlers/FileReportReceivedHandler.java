@@ -1,10 +1,11 @@
 package org.homedrop.core.handlers;
 
 import org.apache.commons.io.FileUtils;
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.Default;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.manager.FilesManager;
 
@@ -12,7 +13,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class FileReportReceivedHandler extends CommandHandler{
+public class FileReportReceivedHandler extends CommandHandler {
     /**
      * @param request Request, which invoked creation
      */

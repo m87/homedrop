@@ -1,10 +1,5 @@
-package org.homedrop.core.handlers;
+package org.homedrop;
 
-import org.homedrop.Command;
-import org.homedrop.Request;
-import org.homedrop.Result;
-import org.homedrop.core.HomeDrop;
-import org.homedrop.core.utils.exceptions.HandlerException;
 
 /** Abstract class for command handlers */
 public abstract class CommandHandler {

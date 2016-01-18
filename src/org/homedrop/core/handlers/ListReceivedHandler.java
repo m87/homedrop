@@ -1,9 +1,9 @@
 package org.homedrop.core.handlers;
 
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.Result;
-import org.homedrop.core.HomeDrop;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.manager.FilesManager;
 

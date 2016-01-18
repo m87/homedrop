@@ -1,11 +1,12 @@
 package org.homedrop.core.handlers;
 
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.HomeDrop;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 
-public class GetHandler extends CommandHandler{
+public class GetHandler extends CommandHandler {
    public GetHandler(HomeDrop system, Request request){
         super(request);
     }

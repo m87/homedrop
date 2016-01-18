@@ -1,4 +1,4 @@
-package org.homedrop.core.utils.exceptions;
+package org.homedrop;
 
 public class HandlerException extends Exception{
     @Override

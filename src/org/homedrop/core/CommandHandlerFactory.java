@@ -1,8 +1,8 @@
 package org.homedrop.core;
 
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.core.handlers.*;
-import org.homedrop.core.utils.exceptions.UnsupportedCommandException;
 
 public class CommandHandlerFactory {
 

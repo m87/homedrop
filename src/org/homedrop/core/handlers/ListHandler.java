@@ -1,6 +1,7 @@
 package org.homedrop.core.handlers;
 
 import org.apache.commons.io.FileUtils;
+import org.homedrop.CommandHandler;
 import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.Default;
@@ -8,7 +9,7 @@ import org.homedrop.core.model.File;
 import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.exceptions.HandlerException;
+import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.core.utils.json.JSON;
 import org.homedrop.manager.FilesManager;
@@ -18,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class ListHandler extends CommandHandler{
+public class ListHandler extends CommandHandler {
     public ListHandler(Request request){
         super(request);
     }

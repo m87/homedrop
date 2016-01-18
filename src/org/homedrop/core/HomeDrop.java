@@ -1,19 +1,12 @@
 package org.homedrop.core;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import org.apache.ftpserver.ftplet.UserManager;
-import org.homedrop.Command;
-import org.homedrop.Plugin;
 import org.homedrop.Request;
 import org.homedrop.Result;
-import org.homedrop.core.model.User;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.exceptions.HandlerException;
-import org.homedrop.core.utils.exceptions.UnsupportedCommandException;
 import org.homedrop.manager.*;
 import org.homedrop.thirdParty.db.HDDB;
-import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.homedrop.thirdParty.server.FtpServer;
 import org.homedrop.thirdParty.server.ServerFactory;
 
@@ -21,8 +14,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
-import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Main system class

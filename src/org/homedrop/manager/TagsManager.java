@@ -1,5 +1,6 @@
 package org.homedrop.manager;
 
+import org.homedrop.MetaFile;
 import org.homedrop.MetaTag;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
@@ -13,6 +14,11 @@ public class TagsManager {
     }
 
     private TagsManager() {
+    }
+
+
+    public void process(MetaFile file){
+
     }
 
     public void assignFromMeta(File file, MetaTag metaTag){

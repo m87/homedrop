@@ -1,6 +1,5 @@
 package org.homedrop.manager;
 
-import org.homedrop.Plugin;
 import org.homedrop.Request;
 import org.homedrop.Result;
 import org.homedrop.core.CommandHandlerFactory;
@@ -8,10 +7,7 @@ import org.homedrop.core.FtpHandler;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
-import org.homedrop.core.utils.exceptions.HandlerException;
-import org.homedrop.core.utils.exceptions.UnsupportedCommandException;
-
-import java.util.Map;
+import org.homedrop.HandlerException;
 
 public class CommandManager implements LifeCycle, FtpHandler{
     private static CommandManager ourInstance = new CommandManager();
