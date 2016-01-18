@@ -4,6 +4,7 @@ import com.sun.org.apache.bcel.internal.generic.NEW;
 import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.EmptyFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.homedrop.Commons;
 import org.homedrop.MetaFile;
 import org.homedrop.MetaPackage;
@@ -59,14 +60,11 @@ public class FilesManager implements LifeCycle{
         //}
         return out;
     }
-    public class EmptyFilter extends EmptyFileFilter{
-
-    }
 
     public void indexAll(String userName){
         try {
             String home = getHome(userName);
-            Collection<java.io.File> files = FileUtils.listFilesAndDirs(new java.io.File(home), new EmptyFilter(), null);
+            Collection<java.io.File> files = FileUtils.listFilesAndDirs(new java.io.File(home), TrueFileFilter.INSTANCE, null);
             for(java.io.File file : files){
                 FileEntity fe = new FileEntity();
                 fe.setPath(DBHelper.removeHome(userName, file.getPath()));
@@ -143,7 +141,7 @@ public class FilesManager implements LifeCycle{
             }else {
                 Path real = Paths.get(home, file.path);
                 java.io.File realFile = real.toFile();
-                Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, new EmptyFilter(), new EmptyFilter());
+                Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
                 for(java.io.File f : files){
                     File entity = new FileEntity();
                     entity.setName(f.getName());
