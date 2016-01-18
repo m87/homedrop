@@ -215,6 +215,38 @@ public interface HDDB {
     List<Rule> getValidRulesByFile(File file);
 
     /**
+     * Get all valid global rules of user with given username
+     * @param username
+     * @return All valid global rules of user with given username
+     */
+    List<Rule> getValidGlobalRules(String username);
+
+    /**
+     * Get all valid global rules of given type of user with given username
+     * @param username
+     * @param type
+     * @return All valid global rules of given type of user with given username
+     */
+    List<Rule> getValidGlobalRulesByType (String username, int type);
+
+    /**
+     * Get all valid specific rules of given type of user with given username
+     * @param username
+     * @param type
+     * @return All valid specific rules of given type of user with given username
+     */
+    List<Rule> getValidSpecificRulesByType(String username, int type);
+
+    /**
+     * Get all valid specific rules of given type of file whose owner is user with given username
+     * @param username
+     * @param type
+     * @param file
+     * @return All valid specific rules of given type of file whose owner is user with given username
+     */
+    List<Rule> getValidSpecificRulesByType(String username, int type, File file);
+
+    /**
      * Assign tag to file
      * @param file
      * @param tag

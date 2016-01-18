@@ -14,8 +14,8 @@ public class RuleEntity extends Rule {
     @DatabaseField(generatedId = true)
     private long id;
 
-    @DatabaseField(canBeNull = true, foreign = true)
-    private FileEntity file;
+    @DatabaseField(canBeNull = true)
+    private String filePath;
 
     @DatabaseField(canBeNull = false)
     private String body;
@@ -28,6 +28,12 @@ public class RuleEntity extends Rule {
 
     @DatabaseField(canBeNull = true, dataType = DataType.DATE_LONG)
     private Date holdsUntil;
+
+    @DatabaseField(canBeNull = false)
+    private int type;
+
+    @DatabaseField(canBeNull = false)
+    private boolean global;
 
     public RuleEntity() {
     }
@@ -49,12 +55,12 @@ public class RuleEntity extends Rule {
         this.body = body;
     }
 
-    public FileEntity getFile() {
-        return file;
+    public String getFilePath() {
+        return filePath;
     }
 
-    public void setFile(File file) {
-        this.file = (FileEntity) file;
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public User getOwner() {
@@ -71,6 +77,22 @@ public class RuleEntity extends Rule {
 
     public void setHoldsSince(Date date) {
         holdsSince = date;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public boolean getGlobal() {
+        return global;
+    }
+
+    public void setGlobal(boolean global) {
+        this.global = global;
     }
 
     public Date getHoldsUntil() {
