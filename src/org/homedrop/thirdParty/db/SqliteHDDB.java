@@ -148,8 +148,9 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public List<File> getFilesByParentPath(String parentPath) {
-        List<File> filesWithParentPath = getFilesByField(DBHelper.formatPath(parentPath), "parentPath");
+    public List<File> getFilesByParentPath(String parentPath, User owner) {
+        List<File> filesWithParentPath = getFilesByField(owner.getId(), "owner_id");
+        filesWithParentPath.removeIf(file -> !file.getParentPath().equals(parentPath));
         return filesWithParentPath;
     }
 

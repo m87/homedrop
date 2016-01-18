@@ -11,6 +11,7 @@ import org.homedrop.MetaPackage;
 import org.homedrop.core.Default;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.File;
+import org.homedrop.core.model.User;
 import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -48,16 +49,17 @@ public class FilesManager implements LifeCycle{
             return FileUtils.deleteQuietly(new java.io.File(Paths.get(getHome(userName),path).toString()));
     }
 
-    public List<File> list(String userName, String args) {
+    public List<File> list(String userName, String path) {
         List<File> out = new ArrayList<>();
-        //try {
-            //Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
-           // Log.d(LogTag.DEV, p.toString());
-            //TODO <<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            out = DBManager.getInstance().getDb().getFilesByParentPath(args);
-        //} catch (ItemNotFoundException e) {
-        //    Log.d(LogTag.DB, "Could not retrieve user's home!");
-        //}
+        try {
+            Path p = Paths.get(FilesManager.getInstance().getHome(userName), path);
+            Log.d(LogTag.DEV, p.toString());
+            HDDB db = DBManager.getInstance().getDb();
+            User owner = db.getUserByName(userName);
+            out = db.getFilesByParentPath(p.toString(), owner);
+        } catch (ItemNotFoundException e) {
+            Log.d(LogTag.DB, "Could not retrieve user's home!");
+        }
         return out;
     }
 

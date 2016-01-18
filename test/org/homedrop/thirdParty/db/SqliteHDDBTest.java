@@ -152,15 +152,15 @@ public class SqliteHDDBTest {
     public void testUpdateFile() throws Exception {
         File[] files = prepareFilesForTest();
         String expectedName = "newName";
-        files[1].setName(expectedName);
+        files[2].setName(expectedName);
         long expectedVersion = 820;
-        files[1].setVersion(expectedVersion);
+        files[2].setVersion(expectedVersion);
         User owner = new UserEntity();
+        owner.setId(files[2].getOwnerId()+1);
+        files[2].setOwner(owner);
         ModelHelpers.setUserFields(owner, "testuser2", "pass2", "home_testuser2");
-        owner.setId(files[1].getOwnerId()+1);
-        files[1].setOwner(owner);
 
-        sqliteHDDB.updateFile(files[1]);
+        sqliteHDDB.updateFile(files[2]);
 
         assertCollectionIsConsistentWithDb(files, File.class, "Id");
     }
@@ -178,7 +178,7 @@ public class SqliteHDDBTest {
     @Test
     public void testGetFilesByName() throws Exception {
         File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[2] };
+        File[] expectedFiles = { files[0], files[3] };
 
         List<File> actualFiles = sqliteHDDB.getFilesByName("fileName");
 
@@ -200,7 +200,7 @@ public class SqliteHDDBTest {
     @Test
     public void testGetAllFilesByPathPrefix() throws Exception {
         File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[1] };
+        File[] expectedFiles = { files[0], files[1], files[2] };
 
         List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", files[0].getOwner());
 
@@ -209,8 +209,8 @@ public class SqliteHDDBTest {
             TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
         }
 
-        expectedFiles = new File[] { files[1] };
-        actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/location2/", files[1].getOwner());
+        expectedFiles = new File[] { files[2] };
+        actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/location2/", files[2].getOwner());
         assertEquals(expectedFiles.length, actualFiles.size());
     }
 
@@ -226,7 +226,7 @@ public class SqliteHDDBTest {
     @Test
     public void testGetAllFilesByPathPrefixWhenOwnerDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
-        User notExistingOwner = files[2].getOwner();
+        User notExistingOwner = files[3].getOwner();
         notExistingOwner.setId(9999);
         List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", notExistingOwner);
 
@@ -249,17 +249,18 @@ public class SqliteHDDBTest {
     @Test(expected = ItemNotFoundException.class)
     public void testGetFileByPathWhenOwnerDoesNotOccur() throws Exception {
         File[] files = prepareFilesForTest();
-        User notExistingOwner = files[2].getOwner();
+        User notExistingOwner = files[3].getOwner();
         notExistingOwner.setId(9999);
-        sqliteHDDB.getFileByPath(files[1].getPath(), notExistingOwner);
+        sqliteHDDB.getFileByPath(files[2].getPath(), notExistingOwner);
     }
 
     @Test
     public void testGetFilesByParentPath() throws Exception {
         File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[2] };
+        File[] expectedFiles = { files[0], files[1] };
+        User owner = sqliteHDDB.getUserByName("testuser");
 
-        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("test_parent_path1");
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("test_parent_path1", owner);
 
         assertEquals(expectedFiles.length, actualFiles.size());
         for (File expectedFile : expectedFiles) {
@@ -270,10 +271,19 @@ public class SqliteHDDBTest {
     @Test
     public void testGetFilesByParentPathWhenFileDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
+        User owner = sqliteHDDB.getUserByName("testuser");
 
-        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("notExistingPath");
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("notExistingPath", owner);
 
         assertEquals(0, actualFiles.size());
+    }
+
+    @Test
+    public void testGetFilesByParentPathWhenOwnerDoesNotOccur() throws Exception {
+        File[] files = prepareFilesForTest();
+        User notExistingOwner = files[3].getOwner();
+        notExistingOwner.setId(9999);
+        sqliteHDDB.getFilesByParentPath(files[2].getPath(), notExistingOwner);
     }
 
     public File[] prepareFilesForTest() {
@@ -281,15 +291,18 @@ public class SqliteHDDBTest {
         FileEntity[] files = {
                 new FileEntity(),
                 new FileEntity(),
+                new FileEntity(),
                 new FileEntity()
         };
         Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
         Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
         ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "test_parent_path1", "testpath/location/", File.FileType.File, 2);
-        ModelHelpers.setFileFields(files[1], "fileName2", 113, firstDate,
+                owners[0], "test_parent_path1", "testpath/location/", File.FileType.Directory, 2);
+        ModelHelpers.setFileFields(files[1], "fileName2", 531, secondDate,
+                owners[0], "test_parent_path1", "testpath/location/name.ext", File.FileType.File, 2);
+        ModelHelpers.setFileFields(files[2], "fileName3", 113, firstDate,
                 owners[0], "test_parent_path2", "testpath/location2/", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[2], "fileName", 585, secondDate,
+        ModelHelpers.setFileFields(files[3], "fileName", 585, secondDate,
                 owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);
 
         for (File file : files) {

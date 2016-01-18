@@ -60,9 +60,10 @@ public interface HDDB {
     /**
      * Get all files of given parent path.
      * @param path
+     * @param owner - path is relative, we want files of specific user
      * @return All files of given path
      */
-    List<File> getFilesByParentPath(String path);
+    List<File> getFilesByParentPath(String path, User owner);
 
     /**
      * Get all files of given path prefix
