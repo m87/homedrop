@@ -4,7 +4,15 @@ import org.homedrop.MetaFile;
 import org.homedrop.MetaTag;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
+import org.homedrop.core.model.User;
+import org.homedrop.core.utils.exceptions.ItemNotFoundException;
+import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.sqliteModels.TagEntity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class TagsManager {
     private static TagsManager ourInstance = new TagsManager();
@@ -17,7 +25,31 @@ public class TagsManager {
     }
 
 
-    public void process(MetaFile file){
+    public void process(MetaFile metaFile, String userName) throws ItemNotFoundException{
+        HDDB db = DBManager.getInstance().getDb();
+        File file = db.getFileByPath(metaFile.path, db.getUserByName(userName));
+        List<Tag> tags = db.getFileTags(file);
+        List<MetaTag> metaTags = Arrays.asList(metaFile.tags);
+
+        //diff
+        for(Tag tag : tags){
+            MetaTag tmp= null;
+            for(MetaTag metaTag : metaTags){
+                if(tag.getName().equals(metaTag.name)){
+                    tmp = metaTag;
+                    break;
+                }
+            }
+            if(null != tmp){
+                metaTags.remove(tmp);
+            }else{
+                unassign(file, tag);
+            }
+        }
+        for(MetaTag metaTag : metaTags){
+            assignFromMeta(file, metaTag);
+        }
+
 
     }
 

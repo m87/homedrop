@@ -1,6 +1,8 @@
 package org.homedrop;
 
 public class MetaRule {
+    /* 1 - backup rule */
+    public int type;
     public String json;
     public long holdsSince;
     public long holdsUntil;

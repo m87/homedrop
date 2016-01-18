@@ -38,9 +38,17 @@ public class RulesManager {
     public void delete(Rule rule){
     }
 
-    public void process(MetaFile file){
+    public void process(java.io.File file, int specialKey){
 
     }
+
+    public void addLocalFromMeta(MetaFile file){
+
+    }
+    public void addGlobalFromMeta(MetaSetting setting){
+
+    }
+
 
     public void process(MetaSetting setting){
 

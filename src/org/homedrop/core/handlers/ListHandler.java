@@ -36,6 +36,7 @@ public class ListHandler extends CommandHandler {
         //TODO relative path in json, indexall
         if(!request.getCommand().getName().equals(getRequest().getCommand().getName())) throw new HandlerException();
         List<File> t = FilesManager.getInstance().list(request.getUserName(), request.getCommand().getArgs()[0]);
+        Log.d(LogTag.DEV, "<<<<<<<<<<<<<<<<<<<"+t.size());
         String json = JSON.files(t);
 
         Path path = null;
