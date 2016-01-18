@@ -29,11 +29,12 @@ public class ModelHelpers {
     }
 
     public static void setRuleFields(Rule rule, String body, Date holdsSince,
-                                     Date holdsUntil, File file, User owner) {
+                                     Date holdsUntil, int type, String filePath, User owner) {
         rule.setBody(body);
         rule.setHoldsSince(holdsSince);
         rule.setHoldsUntil(holdsUntil);
-        rule.setFile(file);
+        rule.setType(type);
+        rule.setFilePath(filePath);
         rule.setOwner(owner);
     }
 
@@ -98,7 +99,10 @@ public class ModelHelpers {
         if (false == areBothNullableItemsEqual(rule1.getHoldsUntil(), rule2.getHoldsUntil())) {
             return false;
         }
-        if (false == areBothNullableItemsEqual(rule1.getFileId(), rule2.getFileId()))  {
+        if (rule1.getType() != rule2.getType()) {
+            return false;
+        }
+        if (false == areBothNullableItemsEqual(rule1.getFilePath(), rule2.getFilePath()))  {
             return false;
         }
         return rule1.getOwnerId() == rule2.getOwnerId();

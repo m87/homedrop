@@ -8,9 +8,7 @@ import com.j256.ormlite.stmt.*;
 
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.*;
-import org.homedrop.core.utils.DBHelper;
 import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
@@ -319,12 +317,12 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<Rule> getValidRulesByFile(File file) {
-        List<Rule>validRules = new ArrayList<Rule>();
+        List<Rule>validRules = new ArrayList<>();
         try {
             Where<RuleEntity, Long> whereClause = ruleDao.queryBuilder().where();
             Date today = new Date();
             whereClause.and(
-                    whereClause.or(whereClause.isNull("file_id"), whereClause.eq("file_id", file.getId())),
+                    whereClause.or(whereClause.isNull("filePath"), whereClause.eq("filePath", file.getPath())),
                     whereClause.or(whereClause.isNull("holdsSince"), whereClause.le("holdsSince", today)),
                     whereClause.or(whereClause.isNull("holdsUntil"), whereClause.ge("holdsUntil", today)));
             PreparedQuery<RuleEntity> preparedQuery = whereClause.prepare();
@@ -336,6 +334,76 @@ public class SqliteHDDB implements HDDB {
             e.printStackTrace();
         }
         return validRules;
+    }
+
+    private final int AnyType = -1;
+
+    @Override
+    public List<Rule> getValidGlobalRules(String username) {
+        List<Rule> validGlobalRules = getRules(username, AnyType, null);
+        return validGlobalRules;
+    }
+
+    @Override
+    public List<Rule> getValidGlobalRulesByType(String username, int type) {
+        List<Rule> validGlobalRulesByType = getRules(username, type, null);
+        return validGlobalRulesByType;
+    }
+
+    @Override
+    public List<Rule> getValidSpecificRulesByType(String username, int type) {
+        File file = new FileEntity();
+        file.setPath(null);
+        List<Rule> validSpecificRulesByType = getRules(username, type, file);
+        return validSpecificRulesByType;
+    }
+
+    @Override
+    public List<Rule> getValidSpecificRulesByType(String username, int type, File file) {
+        List<Rule> validSpecificRulesByType = getRules(username, type, file);
+        return validSpecificRulesByType;
+    }
+
+    private List<Rule> getRules(String username, Integer type, File file) {
+        List<Rule>rules = new ArrayList<>();
+        try {
+            User user = getUserByName(username);
+            Where<RuleEntity, Long> whereClause = ruleDao.queryBuilder().where();
+            int clauseCount = 3;
+            whereClause.eq("owner_id", user.getId());
+
+            Date today = new Date();
+            whereClause.or(whereClause.isNull("holdsSince"), whereClause.le("holdsSince", today));
+            whereClause.or(whereClause.isNull("holdsUntil"), whereClause.ge("holdsUntil", today));
+
+            if (type >= 0) {
+                whereClause.eq("type", type);
+                ++clauseCount;
+            }
+            if (null != file && null != file.getPath()) {
+                whereClause.eq("filePath", file.getPath());
+            }
+            else if (null != file && null == file.getPath()) {
+                whereClause.isNotNull("filePath");
+                // filePath equal to null means that we want to get all rules
+                // that are not global, so they have to point to some filePath
+            }
+            else {
+                whereClause.isNull("filePath");
+            }
+            ++clauseCount;
+
+            whereClause.and(clauseCount);
+            PreparedQuery<RuleEntity> preparedQuery = whereClause.prepare();
+            List<RuleEntity> temporary = ruleDao.query(preparedQuery);
+            rules.addAll(temporary);
+        } catch (ItemNotFoundException e) {
+            Log.d(LogTag.DB, "Error! [Given username does not fit any user!]");
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql error! [Could not get rules!]");
+        }
+        return rules;
     }
 
     @Override

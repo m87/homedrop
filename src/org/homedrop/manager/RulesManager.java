@@ -26,7 +26,7 @@ public class RulesManager {
         HDDB db = DBManager.getInstance().getDb();
         Rule rule = new RuleEntity();
         rule.setOwner(db.getUserByName(metaRule.ownerName));
-        rule.setFile(db.getFileByPath(metaRule.filePath, db.getUserByName(metaRule.ownerName)));
+        rule.setFilePath(metaRule.filePath);
         rule.setBody(metaRule.json);
         rule.setHoldsSince(new Date(metaRule.holdsSince));
         rule.setHoldsUntil(new Date(metaRule.holdsUntil));

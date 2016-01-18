@@ -40,6 +40,7 @@ public class SqliteHDDBTest {
     static JdbcConnectionSource connectionSource;
 
     static Map<Class, Method> areItemsEqualMethodsMap;
+    static Map<String, Method> getRulesMethodsMap;
     static Map<String, Class[]> fieldTypesMap;
 
     @BeforeClass
@@ -60,6 +61,16 @@ public class SqliteHDDBTest {
         fieldTypesMap.put("Id", new Class[] { Long.TYPE });
         fieldTypesMap.put("Name", new Class[] { String.class });
         fieldTypesMap.put("Path", new Class[] { String.class, User.class });
+
+        getRulesMethodsMap = new HashMap<>();
+        getRulesMethodsMap.put("getValidGlobalRules", SqliteHDDB.class
+                .getDeclaredMethod("getValidGlobalRules", String.class));
+        getRulesMethodsMap.put("getValidGlobalRulesByType", SqliteHDDB.class
+                .getDeclaredMethod("getValidGlobalRulesByType", String.class, int.class));
+        getRulesMethodsMap.put("getValidSpecificRulesByType", SqliteHDDB.class
+                .getDeclaredMethod("getValidSpecificRulesByType", String.class, int.class));
+        getRulesMethodsMap.put("getValidSpecificRulesByType3Args", SqliteHDDB.class
+                .getDeclaredMethod("getValidSpecificRulesByType", String.class, int.class, File.class));
     }
 
     @After
@@ -533,7 +544,7 @@ public class SqliteHDDBTest {
         User[] owners = prepareUsersForTest();
         File[] files = prepareFilesForTest();
         Rule[] rules = prepareRulesForTest(owners, files);
-        rules[0].setFile(files[1]);
+        rules[0].setFilePath(files[1].getPath());
         rules[0].setOwner(owners[1]);
         rules[0].setBody("{field: value}");
 
@@ -544,14 +555,16 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetValidRulesByFile() throws Exception {
-        User[] owners = prepareUsersForTest();
+        /*User[] owners = prepareUsersForTest();
         File[] files = prepareFilesForTest();
         Rule[] rules = prepareRulesForTest(owners, files);
 
         Map<File, Rule[]> expectedRulesForFileMap = new HashMap<>();
-        expectedRulesForFileMap.put(files[0], new Rule[] { rules[0], rules[5] });
+        expectedRulesForFileMap.put(files[0], new Rule[] { rules[0], rules[5], rules[5], rules[6] });
         expectedRulesForFileMap.put(files[1], new Rule[] { rules[5] });
         expectedRulesForFileMap.put(files[2], new Rule[] { rules[3], rules[4], rules[5] });
+        // file[0, 1, 2] -> owner[0]
+        // file[3] -> owner[1]
 
         for (Map.Entry<File, Rule[]> expectedRulesForFile : expectedRulesForFileMap.entrySet()) {
             List<Rule> actualRulesForFile = sqliteHDDB.getValidRulesByFile(expectedRulesForFile.getKey());
@@ -559,6 +572,89 @@ public class SqliteHDDBTest {
             assertEquals(expectedRulesForFile.getValue().length, actualRulesForFile.size());
             for (Rule expectedRule : expectedRulesForFile.getValue()) {
                 TestHelpers.assertListContainsItemEqual(actualRulesForFile, expectedRule);
+            }
+        }*/
+    }
+
+    @Test
+    public void testGetValidGlobalRules() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
+        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[5], rules[6] });
+        expectedRulesForUserMap.put(owners[1], new Rule[] { rules[7] });
+
+        List<Object> params = new ArrayList<>();
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidGlobalRules", params);
+    }
+
+    @Test
+    public void testGetValidGlobalRulesByType() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
+        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[6] });
+        expectedRulesForUserMap.put(owners[1], new Rule[] { rules[7] });
+
+        List<Object> params = new ArrayList<Object>();
+        params.add(2);
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidGlobalRulesByType", params);
+
+        expectedRulesForUserMap.clear();
+        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[5] });
+        expectedRulesForUserMap.put(owners[1], new Rule[] {});
+
+        params.clear();
+        params.add(8);
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidGlobalRulesByType", params);
+    }
+
+    @Test
+    public void testGetValidSpecificRulesByTypeWhen2Args() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
+        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[0], rules[4] });
+        expectedRulesForUserMap.put(owners[1], new Rule[] {});
+
+        List<Object> params = new ArrayList<Object>();
+        params.add(2);
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType", params);
+    }
+
+    @Test
+    public void testGetValidSpecificRulesByTypeWhen3Args() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
+        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[3] });
+        expectedRulesForUserMap.put(owners[1], new Rule[] {});
+
+        List<Object> params = new ArrayList<Object>();
+        params.add(5);
+        params.add(files[2]);
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType3Args", params);
+    }
+
+    public void assertCorrectRulesAreGot(Map<User, Rule[]> expectedRulesForUserMap, String methodName, List<Object> params) throws Exception {
+        params.add(0, "");
+        for (Map.Entry<User, Rule[]> expectedRulesForUser : expectedRulesForUserMap.entrySet()) {
+            String username = expectedRulesForUser.getKey().getName();
+            params.set(0, username);
+            Method getRulesMethod = getRulesMethodsMap.get(methodName);
+            List<Rule> actualRulesForUser = (List<Rule>) getRulesMethod.invoke(sqliteHDDB, params.toArray());
+
+            assertEquals(expectedRulesForUser.getValue().length, actualRulesForUser.size());
+            for (Rule expectedRule : expectedRulesForUser.getValue()) {
+                TestHelpers.assertListContainsItemEqual(actualRulesForUser, expectedRule);
             }
         }
     }
@@ -587,6 +683,9 @@ public class SqliteHDDBTest {
                 new RuleEntity(),
                 new RuleEntity(),
                 new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity(),
+                new RuleEntity()
         };
 
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -594,19 +693,34 @@ public class SqliteHDDBTest {
         Date validHoldsSince = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-01", formatter));
         Date invalidHoldsUntil = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-03", formatter));
         ModelHelpers.setRuleFields(rules[0], "{}", validHoldsSince,
-                                   null, files[0], owners[0]);
+                                   null, 2, files[0].getPath(), owners[0]);
         ModelHelpers.setRuleFields(rules[1], "{}", validHoldsSince,
-                                   invalidHoldsUntil, files[0], owners[0]);
+                                   invalidHoldsUntil, 2, files[0].getPath(), owners[0]);
         ModelHelpers.setRuleFields(rules[2], "{}", validHoldsSince,
-                                   invalidHoldsUntil, files[1], owners[0]);
+                                   invalidHoldsUntil, 8, files[1].getPath(), owners[0]);
         Date tomorrow = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().plusDays(1).toLocalDate());
         ModelHelpers.setRuleFields(rules[3], "{}", null,
-                                   tomorrow, files[2], owners[0]);
+                                   tomorrow, 5, files[2].getPath(), owners[0]);
         Date yesterday = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().minusDays(1).toLocalDate());
         ModelHelpers.setRuleFields(rules[4], "{}", yesterday,
-                                   tomorrow, files[2], owners[0]);
+                                   tomorrow, 2, files[2].getPath(), owners[0]);
         ModelHelpers.setRuleFields(rules[5], "{}", yesterday,
-                tomorrow, null, owners[0]);
+                                   tomorrow, 8, null, owners[0]);
+        ModelHelpers.setRuleFields(rules[6], "{}", yesterday,
+                                   tomorrow, 2, null, owners[0]);
+        ModelHelpers.setRuleFields(rules[7], "{}", yesterday,
+                                   tomorrow, 2, null, owners[1]);
+        ModelHelpers.setRuleFields(rules[8], "{}", null,
+                                   yesterday, 2, null, owners[0]);
+
+        /*ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
+                owners[0], "test_parent_path1", "testpath/location/", File.FileType.Directory, 2);
+        ModelHelpers.setFileFields(files[1], "fileName2", 531, secondDate,
+                owners[0], "test_parent_path1", "testpath/location/name.ext", File.FileType.File, 2);
+        ModelHelpers.setFileFields(files[2], "fileName3", 113, firstDate,
+                owners[0], "test_parent_path2", "testpath/location2/", File.FileType.File, 1);
+        ModelHelpers.setFileFields(files[3], "fileName", 585, secondDate,
+                owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);*/
         for (Rule rule : rules) {
             sqliteHDDB.addRule(rule);
         }
