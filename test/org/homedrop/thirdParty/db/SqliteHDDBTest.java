@@ -1,9 +1,8 @@
 package org.homedrop.thirdParty.db;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.table.TableUtils;
-import org.apache.log4j.BasicConfigurator;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;
@@ -37,7 +36,7 @@ public class SqliteHDDBTest {
 
     static DependencyProvider dependencyProvider;
     static SqliteHDDB sqliteHDDB;
-    static JdbcConnectionSource connectionSource;
+    static JdbcPooledConnectionSource connectionSource;
 
     static Map<Class, Method> areItemsEqualMethodsMap;
     static Map<String, Method> getRulesMethodsMap;
@@ -67,9 +66,7 @@ public class SqliteHDDBTest {
         getRulesMethodsMap.put("getValidGlobalRulesByType", SqliteHDDB.class
                 .getDeclaredMethod("getValidGlobalRulesByType", String.class, int.class));
         getRulesMethodsMap.put("getValidSpecificRulesByType", SqliteHDDB.class
-                .getDeclaredMethod("getValidSpecificRulesByType", String.class, int.class));
-        getRulesMethodsMap.put("getValidSpecificRulesByType3Args", SqliteHDDB.class
-                .getDeclaredMethod("getValidSpecificRulesByType", String.class, int.class, File.class));
+                .getDeclaredMethod("getValidSpecificRulesByType", String.class, int.class, String.class));
     }
 
     @After
@@ -227,7 +224,7 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testGetAllFilesByPathPrefix() throws Exception {
+    public void testGetSubtreeWithContainingDirectory() throws Exception {
         File[] files = prepareFilesForTest();
         File[] expectedFiles = { files[0], files[1], files[2] };
 
@@ -244,7 +241,7 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testGetAllFilesByPathPrefixWhenPrefixDoesNotExist() throws Exception {
+    public void testetSubtreeWithContainingDirectoryWhenPrefixDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
 
         List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("notExistingPrefix/", files[0].getOwner());
@@ -660,21 +657,6 @@ public class SqliteHDDBTest {
     }
 
     @Test
-    public void testGetValidSpecificRulesByTypeWhen2Args() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
-
-        Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
-        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[0], rules[4] });
-        expectedRulesForUserMap.put(owners[1], new Rule[] {});
-
-        List<Object> params = new ArrayList<Object>();
-        params.add(2);
-        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType", params);
-    }
-
-    @Test
     public void testGetValidSpecificRulesByTypeWhen3Args() throws Exception {
         User[] owners = prepareUsersForTest();
         File[] files = prepareFilesForTest();
@@ -686,8 +668,19 @@ public class SqliteHDDBTest {
 
         List<Object> params = new ArrayList<Object>();
         params.add(5);
-        params.add(files[2]);
-        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType3Args", params);
+        params.add(files[2].getPath());
+        assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType", params);
+    }
+
+    @Test
+    public void testRuleExists() throws Exception {
+        User[] owners = prepareUsersForTest();
+        File[] files = prepareFilesForTest();
+        Rule[] rules = prepareRulesForTest(owners, files);
+
+        assertTrue(sqliteHDDB.ruleExists(owners[0].getName(), files[0].getPath()));
+        assertFalse(sqliteHDDB.ruleExists("notExistingName", files[0].getPath()));
+        assertFalse(sqliteHDDB.ruleExists(owners[1].getName(), "notExistingPath"));
     }
 
     public void assertCorrectRulesAreGot(Map<User, Rule[]> expectedRulesForUserMap, String methodName, List<Object> params) throws Exception {

@@ -1,6 +1,6 @@
 package org.homedrop.manager;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.homedrop.thirdParty.db.HDDB;
@@ -28,14 +28,14 @@ public class DependencyProvider {
         this.config = config;
     }
 
-    public JdbcConnectionSource getDbConnectionSource() throws SQLException {
+    public JdbcPooledConnectionSource getDbConnectionSource() throws SQLException {
         String dbConnectionString = "jdbc:" + config.getDbDriverName() + ":" + config.getDbPath();
-        return new JdbcConnectionSource(dbConnectionString);
+        return new JdbcPooledConnectionSource(dbConnectionString);
     }
 
     public Constructor<? extends  HDDB> getDbDriverConstructor() throws Exception {
         String driverName = config.getDbDriverName();
-        Constructor<? extends HDDB> ctor = dbDriversTypes.get(driverName).getConstructor(JdbcConnectionSource.class);
+        Constructor<? extends HDDB> ctor = dbDriversTypes.get(driverName).getConstructor(JdbcPooledConnectionSource.class);
         return ctor;
     }
 

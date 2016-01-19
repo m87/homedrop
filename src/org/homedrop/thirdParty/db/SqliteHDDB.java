@@ -2,7 +2,7 @@ package org.homedrop.thirdParty.db;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.*;
 
@@ -29,7 +29,7 @@ public class SqliteHDDB implements HDDB {
     private Dao<FileTagEntity,Long> fileTagDao;
     private Dao<RuleEntity,Long> ruleDao;
 
-    public SqliteHDDB(JdbcConnectionSource connectionSource){
+    public SqliteHDDB(JdbcPooledConnectionSource connectionSource){
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
@@ -397,20 +397,18 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public List<Rule> getValidSpecificRulesByType(String username, int type) {
-        File file = new FileEntity();
-        file.setPath(null);
-        List<Rule> validSpecificRulesByType = getRules(username, type, file);
+    public List<Rule> getValidSpecificRulesByType(String username, int type, String filePath) {
+        List<Rule> validSpecificRulesByType = getRules(username, type, filePath);
         return validSpecificRulesByType;
     }
 
     @Override
-    public List<Rule> getValidSpecificRulesByType(String username, int type, File file) {
-        List<Rule> validSpecificRulesByType = getRules(username, type, file);
-        return validSpecificRulesByType;
+    public boolean ruleExists(String username, String filePath) {
+        List<Rule> rules = getRules(username, -1, filePath);
+        return rules.size() > 0;
     }
 
-    private List<Rule> getRules(String username, Integer type, File file) {
+    private List<Rule> getRules(String username, Integer type, String filePath) {
         List<Rule>rules = new ArrayList<>();
         try {
             User user = getUserByName(username);
@@ -426,13 +424,8 @@ public class SqliteHDDB implements HDDB {
                 whereClause.eq("type", type);
                 ++clauseCount;
             }
-            if (null != file && null != file.getPath()) {
-                whereClause.eq("filePath", file.getPath());
-            }
-            else if (null != file && null == file.getPath()) {
-                whereClause.isNotNull("filePath");
-                // filePath equal to null means that we want to get all rules
-                // that are not global, so they have to point to some filePath
+            if (null != filePath) {
+                whereClause.eq("filePath", filePath);
             }
             else {
                 whereClause.isNull("filePath");
