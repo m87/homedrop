@@ -1,5 +1,6 @@
 package org.homedrop.manager;
 
+import org.homedrop.RulesCommons;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.meta.MetaFile;
@@ -11,6 +12,7 @@ import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.sqliteModels.RuleEntity;
 
 import java.util.Date;
+import java.util.List;
 
 public class RulesManager {
     private static RulesManager ourInstance = new RulesManager();
@@ -24,7 +26,17 @@ public class RulesManager {
 
     public void addFromMeta(MetaRule metaRule) throws ItemNotFoundException {
         HDDB db = DBManager.getInstance().getDb();
-        Rule rule = new RuleEntity();
+        Rule rule = null;
+        if(metaRule.type == RulesCommons.BACKUP_RULE){
+            List<Rule> rules = db.getValidSpecificRulesByType(metaRule.ownerName, RulesCommons.BACKUP_RULE,metaRule.filePath);
+            if(rules.size()==0){
+                rule = new RuleEntity();
+            }else{
+                rule = rules.get(0);
+            }
+        }else{
+            rule = new RuleEntity();
+        }
         rule.setOwner(db.getUserByName(metaRule.ownerName));
         rule.setFilePath(metaRule.filePath);
         rule.setBody(metaRule.json);

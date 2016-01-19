@@ -27,6 +27,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class FilesManager implements LifeCycle {
+    private String WorkingDir;
+
+
+
+
     private static FilesManager ourInstance = new FilesManager();
 
     public static FilesManager getInstance() {
@@ -161,7 +166,7 @@ public class FilesManager implements LifeCycle {
                // Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
                 //for (java.io.File f : files) {
 
-                //TODO if exists
+                if(!DBManager.getInstance().getDb().fileExists(userName,DBHelper.formatPath(file.path))) {
                     File entity = new FileEntity();
                     entity.setName(realFile.getName());
                     entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, realFile.getParentFile().getAbsolutePath())));
@@ -169,6 +174,7 @@ public class FilesManager implements LifeCycle {
                     entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
                     entity.setType(File.FileType.Directory);
                     DBManager.getInstance().getDb().addFile(entity);
+                }
                 //}
 
                 //add tags
@@ -213,13 +219,17 @@ public class FilesManager implements LifeCycle {
 
             //TODO if exists
             //create entity
-            File entity = new FileEntity();
-            entity.setName(absFile.getName());
-            entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getParent())));
-            entity.setPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getAbsolutePath())));
-            entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
-            entity.setType(File.FileType.File);
 
+            File entity = null;
+            boolean exists = DBManager.getInstance().getDb().fileExists(userName,DBHelper.formatPath(file.path));
+            if(!exists) {
+                entity = new FileEntity();
+                entity.setName(absFile.getName());
+                entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getParent())));
+                entity.setPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getAbsolutePath())));
+                entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
+                entity.setType(File.FileType.File);
+            }
 
             //add local rules, effects existing file with same name
             RulesManager.getInstance().addLocalFromMeta(file);
@@ -236,14 +246,17 @@ public class FilesManager implements LifeCycle {
                 FileUtils.deleteQuietly(dst);
                 FileUtils.moveFile(src, dst);
                 //db.deleteFile(db.getFileByPath(relativePath, db.getUserByName(userName)));
-                //TODO ifexists an delete old
-                db.addFile(entity);
+                if(!exists) {
+                    db.addFile(entity);
+                }
 
             } else {
                 //manage backup
                 Backup.process(rule, userName, specialKey); //move file //TODO manage db
                 FileUtils.moveFile(src, dst);
-                db.addFile(entity);
+                if(!exists) {
+                    db.addFile(entity);
+                }
             }
             //add tags
             TagsManager.getInstance().process(file, userName);
