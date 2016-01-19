@@ -11,6 +11,8 @@ public class HD {
     public static final String FILE_INIT = "HD_FILE_INIT";
     public static final String FILE_R = "HD_FILE_R";
 
+    public static final String RENAME = "HD_RENAME";
+
 
 
 }

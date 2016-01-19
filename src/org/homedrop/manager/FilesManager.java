@@ -2,7 +2,9 @@ package org.homedrop.manager;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.homedrop.Result;
 import org.homedrop.RulesCommons;
+import org.homedrop.core.utils.exceptions.ItemWithValueAlreadyExistsException;
 import org.homedrop.meta.MetaFile;
 import org.homedrop.meta.MetaPackage;
 import org.homedrop.core.Default;
@@ -27,9 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class FilesManager implements LifeCycle {
-    private String WorkingDir;
-
-
 
 
     private static FilesManager ourInstance = new FilesManager();
@@ -41,8 +40,16 @@ public class FilesManager implements LifeCycle {
     private FilesManager() {
     }
 
+    public void rename(String userName, String pathSrc, String pathDst) throws ItemNotFoundException, ItemWithValueAlreadyExistsException {
+            DBManager.getInstance().getDb().renameFile(userName,pathSrc,pathDst);
+            java.io.File fileSrc = Paths.get(getHome(userName),pathSrc).toFile();
+            java.io.File fileDst = Paths.get(getHome(userName),pathDst).toFile();
+            fileSrc.renameTo(fileDst);
+    }
+
 
     public boolean delete(String userName, String path) throws ItemNotFoundException {
+        DBManager.getInstance().getDb().deleteFileByPath(userName,DBHelper.formatPath(path));
         FileUtils.deleteQuietly(new java.io.File(DBHelper.mapUserPathAsString(userName, path)));
 
         return true;
