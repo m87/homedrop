@@ -48,10 +48,11 @@ public class FilesManager implements LifeCycle {
     }
 
     public List<File> list(String userName, String path) {
+        //TODO patse path as path|#tag#tag#tag
+        Log.d(LogTag.DEV, path);
         List<File> out = new ArrayList<>();
         try {
             Path p = Paths.get(path);
-            Log.d(LogTag.DEV, p.toString());
             HDDB db = DBManager.getInstance().getDb();
             User owner = db.getUserByName(userName);
             out = db.getFilesByParentPath(p.toString(), owner);
@@ -159,6 +160,8 @@ public class FilesManager implements LifeCycle {
                 java.io.File realFile = real.toFile();
                // Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
                 //for (java.io.File f : files) {
+
+                //TODO if exists
                     File entity = new FileEntity();
                     entity.setName(realFile.getName());
                     entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, realFile.getParentFile().getAbsolutePath())));
@@ -171,7 +174,7 @@ public class FilesManager implements LifeCycle {
                 //add tags
                 TagsManager.getInstance().process(file, userName);
                 //add local rules
-                RulesManager.getInstance().addLocalFromMeta(file);
+                RulesManager.getInstance().addLocalFromMeta(file); //TODO one beckup rule
 
                 realFile.mkdirs();
             }
@@ -196,7 +199,7 @@ public class FilesManager implements LifeCycle {
 
             //creates dirs tree with entities
             if (file.isDir) {
-                createDirsFromMeta(userName, file, specialKey, true);
+                createDirsFromMeta(userName, file, specialKey, true); //<< always replace settings with new
                 return true;
             }
 
@@ -208,6 +211,7 @@ public class FilesManager implements LifeCycle {
             Path absPath = Paths.get(getHome(userName), relativePath);
             java.io.File absFile = absPath.toFile();
 
+            //TODO if exists
             //create entity
             File entity = new FileEntity();
             entity.setName(absFile.getName());
@@ -232,19 +236,14 @@ public class FilesManager implements LifeCycle {
                 FileUtils.deleteQuietly(dst);
                 FileUtils.moveFile(src, dst);
                 //db.deleteFile(db.getFileByPath(relativePath, db.getUserByName(userName)));
+                //TODO ifexists an delete old
                 db.addFile(entity);
 
             } else {
-
                 //manage backup
-                RulesManager.getInstance().process(dst, specialKey);
-
-                //move file to backup folder with new-sessionid suffix
-                /*FileUtils.deleteQuietly(dst);
+                Backup.process(rule, userName, specialKey); //move file //TODO manage db
                 FileUtils.moveFile(src, dst);
-                db.deleteFile(db.getFileByPath(path, db.getUserByName(userName)));
                 db.addFile(entity);
-*/
             }
             //add tags
             TagsManager.getInstance().process(file, userName);
@@ -261,6 +260,11 @@ public class FilesManager implements LifeCycle {
 
         return true;
     }
+
+    public static class Backup{
+        public static void process(Rule rule, String userName, int specialKey){}
+    }
+
 
 
     @Override

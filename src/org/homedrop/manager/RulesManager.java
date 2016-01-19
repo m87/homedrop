@@ -1,5 +1,7 @@
 package org.homedrop.manager;
 
+import org.homedrop.core.utils.Log;
+import org.homedrop.core.utils.LogTag;
 import org.homedrop.meta.MetaFile;
 import org.homedrop.meta.MetaRule;
 import org.homedrop.meta.MetaSetting;
@@ -28,6 +30,7 @@ public class RulesManager {
         rule.setBody(metaRule.json);
         rule.setHoldsSince(new Date(metaRule.holdsSince));
         rule.setHoldsUntil(new Date(metaRule.holdsUntil));
+        rule.setType(metaRule.type);
 
         db.addRule(rule);
 
@@ -41,9 +44,23 @@ public class RulesManager {
     }
 
     public void addLocalFromMeta(MetaFile file){
+        for(MetaRule rule : file.rules){
+            try {
+                addFromMeta(rule);
+            } catch (ItemNotFoundException e) {
+                Log.d(LogTag.DB, "home not found");
+            }
+        }
 
     }
     public void addGlobalFromMeta(MetaSetting setting){
+        for(MetaRule rule : setting.rules){
+            try {
+                addFromMeta(rule);
+            } catch (ItemNotFoundException e) {
+                Log.d(LogTag.DB, "home not found");
+            }
+        }
 
     }
 

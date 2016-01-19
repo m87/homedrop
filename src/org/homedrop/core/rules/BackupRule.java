@@ -3,7 +3,7 @@ package org.homedrop.core.rules;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.homedrop.meta.MetaRule;
-import org.homedrop.utils.rules.BackupRuleDummy;
+import org.homedrop.BackupRuleDummy;
 
 public class BackupRule extends Rule{
     private long deadline; //-1 if not important // backup life

@@ -1,4 +1,4 @@
-package org.homedrop.utils.rules;
+package org.homedrop;
 
 
 /** For easier MetaRule creation */
