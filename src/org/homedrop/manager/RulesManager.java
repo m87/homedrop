@@ -20,7 +20,6 @@ public class RulesManager {
     private RulesManager() {
     }
 
-
     public void addFromMeta(MetaRule metaRule) throws ItemNotFoundException {
         HDDB db = DBManager.getInstance().getDb();
         Rule rule = new RuleEntity();

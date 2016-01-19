@@ -9,7 +9,7 @@ public class TagEntity extends Tag {
     @DatabaseField(generatedId = true)
     private long id;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, unique = true)
     private String name;
 
     public long getId() {

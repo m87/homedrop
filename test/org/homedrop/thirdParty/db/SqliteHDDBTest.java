@@ -456,6 +456,17 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testAddTagWhenTagAlreadyExists() throws Exception {
+        Tag [] tags = prepareTagsForTest();
+        Tag duplicateTag = new TagEntity();
+        duplicateTag.setName(tags[1].getName());
+
+        sqliteHDDB.addTag(duplicateTag);
+
+        assertTrue(TestHelpers.areItemsEqual(tags[1], duplicateTag));
+    }
+
+    @Test
     public void testDeleteTag() throws Exception {
         Tag[] tags = prepareTagsForTest();
         deleteItemTestTemplate(tags, Tag.class);
