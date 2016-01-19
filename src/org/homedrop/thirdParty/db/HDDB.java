@@ -45,6 +45,15 @@ public interface HDDB {
     void deleteFileById(long id);
 
     /**
+     * Delete file with given path from database.
+     * If it is directory then delete all items of
+     * parentPath equal to path
+     * @param path
+     * @param owner
+     */
+    void deleteFileByPath(String path, User owner);
+
+    /**
      * Update file with id equal to id of given file object.
      * @param file
      */
@@ -66,12 +75,20 @@ public interface HDDB {
     List<File> getFilesByParentPath(String path, User owner);
 
     /**
-     * Get all files of given path prefix
+     * Get all files belonging to the subtree
      * @param prefix
      * @param owner - path is relative, we want files of specific user
      * @return All files of given path prefix
      */
-    List<File> getAllFilesByPathPrefix(String prefix, User owner);
+    List<File> getSubtreeWithContainingDirectory(String prefix, User owner);
+
+    /**
+     * Checks if file of owner with username and given path exists
+     * @param username
+     * @param path
+     * @return true if file exists and false if doesn't exists
+     */
+    boolean fileExists(String username, String path);
 
     /**
      * Get file of given path.

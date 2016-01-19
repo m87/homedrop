@@ -45,7 +45,6 @@ public class SqliteHDDBTest {
 
     @BeforeClass
     static public void setUpTest() throws Exception {
-        BasicConfigurator.configure();
         ConfigManager config = ConfigManager.getInstance();
         config.loadConfiguration("test-env/homedrop_test.cfg");
         dependencyProvider = DependencyProvider.getInstance();
@@ -142,6 +141,25 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testDeleteFileByPathWhenDirectoryIsDeleted() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        sqliteHDDB.deleteFileByPath("testpath/location", files[0].getOwner());
+
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location", files[0].getOwner());
+        assertEquals(1, actualFiles.size());
+    }
+
+    @Test
+    public void testDeleteFileByPathWhenSingleFileIsDeleted() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        sqliteHDDB.deleteFileByPath("testpath/location/name.ext", files[0].getOwner());
+
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location", files[0].getOwner());
+    }
+
+    @Test
     public void testDeleteFileUnassignTags() throws Exception {
         File[] files = prepareFilesForTest();
         Tag[] tags = prepareTagsForTest();
@@ -213,7 +231,7 @@ public class SqliteHDDBTest {
         File[] files = prepareFilesForTest();
         File[] expectedFiles = { files[0], files[1], files[2] };
 
-        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/", files[0].getOwner());
 
         assertEquals(expectedFiles.length, actualFiles.size());
         for (File expectedFile : expectedFiles) {
@@ -221,7 +239,7 @@ public class SqliteHDDBTest {
         }
 
         expectedFiles = new File[] { files[2] };
-        actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/location2/", files[2].getOwner());
+        actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location2/", files[2].getOwner());
         assertEquals(expectedFiles.length, actualFiles.size());
     }
 
@@ -229,7 +247,7 @@ public class SqliteHDDBTest {
     public void testGetAllFilesByPathPrefixWhenPrefixDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
 
-        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("notExistingPrefix/", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("notExistingPrefix/", files[0].getOwner());
 
         assertEquals(0, actualFiles.size());
     }
@@ -239,7 +257,7 @@ public class SqliteHDDBTest {
         File[] files = prepareFilesForTest();
         User notExistingOwner = files[3].getOwner();
         notExistingOwner.setId(9999);
-        List<File> actualFiles = sqliteHDDB.getAllFilesByPathPrefix("testpath/", notExistingOwner);
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/", notExistingOwner);
 
         assertEquals(0, actualFiles.size());
     }
@@ -268,10 +286,10 @@ public class SqliteHDDBTest {
     @Test
     public void testGetFilesByParentPath() throws Exception {
         File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[1] };
+        File[] expectedFiles = { files[1], files[2] };
         User owner = sqliteHDDB.getUserByName("testuser");
 
-        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("test_parent_path1", owner);
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("testpath/location", owner);
 
         assertEquals(expectedFiles.length, actualFiles.size());
         for (File expectedFile : expectedFiles) {
@@ -297,9 +315,20 @@ public class SqliteHDDBTest {
         sqliteHDDB.getFilesByParentPath(files[2].getPath(), notExistingOwner);
     }
 
+    @Test
+    public void testFileExists() throws Exception {
+        File[] files = prepareFilesForTest();
+
+        assertTrue(sqliteHDDB.fileExists(files[1].getOwner().getName(), files[1].getPath()));
+        assertFalse(sqliteHDDB.fileExists(files[1].getOwner().getName(), "notExistingPath"));
+    }
+
     public File[] prepareFilesForTest() {
         User[] owners = prepareUsersForTest();
         FileEntity[] files = {
+                new FileEntity(),
+                new FileEntity(),
+                new FileEntity(),
                 new FileEntity(),
                 new FileEntity(),
                 new FileEntity(),
@@ -308,13 +337,19 @@ public class SqliteHDDBTest {
         Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
         Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
         ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "test_parent_path1", "testpath/location/", File.FileType.Directory, 2);
+                owners[0], "testpath", "testpath/location", File.FileType.Directory, 2);
         ModelHelpers.setFileFields(files[1], "fileName2", 531, secondDate,
-                owners[0], "test_parent_path1", "testpath/location/name.ext", File.FileType.File, 2);
-        ModelHelpers.setFileFields(files[2], "fileName3", 113, firstDate,
-                owners[0], "test_parent_path2", "testpath/location2/", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[3], "fileName", 585, secondDate,
-                owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);
+                owners[0], "testpath/location", "testpath/location/name.ext", File.FileType.File, 2);
+        ModelHelpers.setFileFields(files[2], "fileName21", 7823, firstDate,
+                owners[0], "testpath/location", "testpath/location/otherdir", File.FileType.Directory, 4);
+        ModelHelpers.setFileFields(files[3], "fileName22", 74, firstDate,
+                owners[0], "testpath/location/otherdir", "testpath/location/otherdir/oname.ext", File.FileType.File, 1);
+        ModelHelpers.setFileFields(files[4], "fileName23", 321, secondDate,
+                owners[0], "testpath/location2/", "testpath/location2/oname.ext", File.FileType.File, 1);
+        ModelHelpers.setFileFields(files[5], "fileName3", 113, firstDate,
+                owners[0], "testpath2", "testpath2/location2.ext", File.FileType.File, 1);
+        ModelHelpers.setFileFields(files[6], "fileName", 585, secondDate,
+                owners[1], "test_parent_path1", "test_parent_path1/testpath", File.FileType.File, 4);
 
         for (File file : files) {
             sqliteHDDB.addFile(file);

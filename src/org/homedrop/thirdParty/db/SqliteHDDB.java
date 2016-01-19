@@ -128,6 +128,30 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public void deleteFileByPath(String path, User owner) {
+        try {
+            List<File> files = getSubtreeWithContainingDirectory(path, owner);
+            /*DeleteBuilder<T, Long> deleteBuilder = weakEntityDao.deleteBuilder();
+            Iterator<Map.Entry<String, Long>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
+            Map.Entry<String, Long> entry = iterator.next();
+            Where<T, Long> where = deleteBuilder.where().eq(entry.getKey(), entry.getValue());
+            while (iterator.hasNext()) {
+                entry = iterator.next();
+                where = where.and().eq(entry.getKey(), entry.getValue());
+            }
+            deleteBuilder.delete();*/
+            DeleteBuilder<FileEntity, Long> deleteBuilder = fileDao.deleteBuilder();
+            String preparedPath = path.replace("!", "!!").replace("?", "!?");
+            deleteBuilder.where().raw("path LIKE ? ESCAPE '!' OR path == ?",
+                    new SelectArg("path", DBHelper.formatPath(preparedPath) + "/%"), new SelectArg("path", DBHelper.formatPath(path)));
+            deleteBuilder.delete();
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql transaction error! [Could not delete files by path: " + path + "]");
+        }
+    }
+
+    @Override
     public void updateFile(File file) throws ItemNotFoundException {
         FileEntity fileAsEntity = (FileEntity) file;
         updateWithDao(fileDao, fileAsEntity, "File", file.getName());
@@ -140,7 +164,7 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public List<File> getAllFilesByPathPrefix(String prefix, User owner) {
+    public List<File> getSubtreeWithContainingDirectory(String prefix, User owner) {
         List<File> filesWithPathPrefix = getFilesByField(owner.getId(), "owner_id");
         filesWithPathPrefix.removeIf(file -> !file.getPath().startsWith(prefix));
         return filesWithPathPrefix;
@@ -153,8 +177,16 @@ public class SqliteHDDB implements HDDB {
         return filesWithParentPath;
     }
 
-    public boolean exists(String userName, String path){
-        return false;
+    @Override
+    public boolean fileExists(String username, String path){
+        try {
+            User owner = getUserByName(username);
+            getFileByPath(path, owner);
+        }
+        catch (ItemNotFoundException e) {
+            return false;
+        }
+        return true;
     }
 
     private List<File> getFilesByField(Object fieldValue, String fieldName) {
