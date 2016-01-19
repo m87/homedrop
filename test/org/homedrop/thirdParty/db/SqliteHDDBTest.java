@@ -141,9 +141,9 @@ public class SqliteHDDBTest {
     public void testDeleteFileByPathWhenDirectoryIsDeleted() throws Exception {
         File[] files = prepareFilesForTest();
 
-        sqliteHDDB.deleteFileByPath("testpath/location", files[0].getOwner());
+        sqliteHDDB.deleteFileByPath(files[0].getOwner().getName(), "testpath/location");
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/location");
         assertEquals(1, actualFiles.size());
     }
 
@@ -151,9 +151,9 @@ public class SqliteHDDBTest {
     public void testDeleteFileByPathWhenSingleFileIsDeleted() throws Exception {
         File[] files = prepareFilesForTest();
 
-        sqliteHDDB.deleteFileByPath("testpath/location/name.ext", files[0].getOwner());
+        sqliteHDDB.deleteFileByPath(files[0].getOwner().getName(), "testpath/location/name.ext");
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/location");
     }
 
     @Test
@@ -228,7 +228,7 @@ public class SqliteHDDBTest {
         File[] files = prepareFilesForTest();
         File[] expectedFiles = { files[0], files[1], files[2] };
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/");
 
         assertEquals(expectedFiles.length, actualFiles.size());
         for (File expectedFile : expectedFiles) {
@@ -236,15 +236,15 @@ public class SqliteHDDBTest {
         }
 
         expectedFiles = new File[] { files[2] };
-        actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/location2/", files[2].getOwner());
+        actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[2].getOwner().getName(), "testpath/location2/");
         assertEquals(expectedFiles.length, actualFiles.size());
     }
 
     @Test
-    public void testetSubtreeWithContainingDirectoryWhenPrefixDoesNotExist() throws Exception {
+    public void testSubtreeWithContainingDirectoryWhenPrefixDoesNotExist() throws Exception {
         File[] files = prepareFilesForTest();
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("notExistingPrefix/", files[0].getOwner());
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "notExistingPrefix/");
 
         assertEquals(0, actualFiles.size());
     }
@@ -254,7 +254,7 @@ public class SqliteHDDBTest {
         File[] files = prepareFilesForTest();
         User notExistingOwner = files[3].getOwner();
         notExistingOwner.setId(9999);
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory("testpath/", notExistingOwner);
+        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(notExistingOwner.getName(), "testpath/");
 
         assertEquals(0, actualFiles.size());
     }

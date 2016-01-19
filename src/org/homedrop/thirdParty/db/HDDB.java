@@ -5,6 +5,7 @@ import org.homedrop.core.model.Tag;
 import org.homedrop.core.model.User;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
+import org.homedrop.core.utils.exceptions.ItemWithValueAlreadyExistsException;
 
 import java.util.List;
 
@@ -48,16 +49,25 @@ public interface HDDB {
      * Delete file with given path from database.
      * If it is directory then delete all items of
      * parentPath equal to path
-     * @param path
-     * @param owner
+     * @param username
+     * @param filePath
      */
-    void deleteFileByPath(String path, User owner);
+    void deleteFileByPath(String username, String filePath);
 
     /**
      * Update file with id equal to id of given file object.
      * @param file
      */
     void updateFile(File file) throws ItemNotFoundException;
+
+    /**
+     * Rename file if exists to path not owned by any file
+     * @param username
+     * @param pathSrc
+     * @param pathDest
+     */
+    void renameFile(String username, String pathSrc, String pathDest)
+            throws ItemNotFoundException, ItemWithValueAlreadyExistsException;
 
     /**
      * Get all files of given name.
@@ -76,11 +86,11 @@ public interface HDDB {
 
     /**
      * Get all files belonging to the subtree
+     * @param username - path is relative, we want files of specific user
      * @param prefix
-     * @param owner - path is relative, we want files of specific user
      * @return All files of given path prefix
      */
-    List<File> getSubtreeWithContainingDirectory(String prefix, User owner);
+    List<File> getSubtreeWithContainingDirectory(String username, String prefix);
 
     /**
      * Checks if file of owner with username and given path exists

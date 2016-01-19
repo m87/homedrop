@@ -14,6 +14,7 @@ import org.homedrop.core.utils.Identifiable;
 import org.homedrop.core.utils.Log;
 import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
+import org.homedrop.core.utils.exceptions.ItemWithValueAlreadyExistsException;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
 import java.sql.SQLException;
@@ -128,9 +129,9 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
-    public void deleteFileByPath(String path, User owner) {
+    public void deleteFileByPath(String username, String filePath) {
         try {
-            List<File> files = getSubtreeWithContainingDirectory(path, owner);
+            List<File> files = getSubtreeWithContainingDirectory(username, filePath);
             /*DeleteBuilder<T, Long> deleteBuilder = weakEntityDao.deleteBuilder();
             Iterator<Map.Entry<String, Long>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
             Map.Entry<String, Long> entry = iterator.next();
@@ -141,13 +142,13 @@ public class SqliteHDDB implements HDDB {
             }
             deleteBuilder.delete();*/
             DeleteBuilder<FileEntity, Long> deleteBuilder = fileDao.deleteBuilder();
-            String preparedPath = path.replace("!", "!!").replace("?", "!?");
+            String preparedPath = filePath.replace("!", "!!").replace("?", "!?");
             deleteBuilder.where().raw("path LIKE ? ESCAPE '!' OR path == ?",
-                    new SelectArg("path", DBHelper.formatPath(preparedPath) + "/%"), new SelectArg("path", DBHelper.formatPath(path)));
+                    new SelectArg("path", DBHelper.formatPath(preparedPath) + "/%"), new SelectArg("path", DBHelper.formatPath(preparedPath)));
             deleteBuilder.delete();
         }
         catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql transaction error! [Could not delete files by path: " + path + "]");
+            Log.d(LogTag.DB, "Sql transaction error! [Could not delete files by path: " + filePath + "]");
         }
     }
 
@@ -158,16 +159,24 @@ public class SqliteHDDB implements HDDB {
     }
 
     @Override
+    public void renameFile(String username, String pathSrc, String pathDest)
+            throws ItemNotFoundException, ItemWithValueAlreadyExistsException {
+        //TODO: implement (remember about updating all subtree and rules)
+    }
+
+    @Override
     public List<File> getFilesByName(String name) {
         List<File> filesWithName = getFilesByField(name, "name");
         return filesWithName;
     }
 
     @Override
-    public List<File> getSubtreeWithContainingDirectory(String prefix, User owner) {
-        List<File> filesWithPathPrefix = getFilesByField(owner.getId(), "owner_id");
-        filesWithPathPrefix.removeIf(file -> !file.getPath().startsWith(prefix));
-        return filesWithPathPrefix;
+    public List<File> getSubtreeWithContainingDirectory(String username, String prefix) {
+//        List<File> filesWithPathPrefix = getFilesByField(owner.getId(), "owner_id");
+//        filesWithPathPrefix.removeIf(file -> !file.getPath().startsWith(prefix));
+//        return filesWithPathPrefix;
+        // TODO: implement
+        return null;
     }
 
     @Override
