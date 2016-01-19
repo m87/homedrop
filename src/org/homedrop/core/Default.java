@@ -19,7 +19,6 @@ public class Default {
     public static String ARG_SEP = "|";
 
 
-    public static final int BACKUP_RULE = 1;
 
 
 }

@@ -10,6 +10,7 @@ import org.homedrop.HandlerException;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.core.utils.json.JSONConverter;
 import org.homedrop.manager.FilesManager;
+import org.homedrop.meta.MetaPackage;
 
 import java.io.File;
 import java.io.IOException;

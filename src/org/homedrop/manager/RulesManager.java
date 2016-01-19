@@ -1,9 +1,8 @@
 package org.homedrop.manager;
 
-import org.homedrop.MetaFile;
-import org.homedrop.MetaRule;
-import org.homedrop.MetaSetting;
-import org.homedrop.core.model.File;
+import org.homedrop.meta.MetaFile;
+import org.homedrop.meta.MetaRule;
+import org.homedrop.meta.MetaSetting;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.thirdParty.db.HDDB;

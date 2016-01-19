@@ -2,8 +2,8 @@ package org.homedrop.core.utils.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.homedrop.MetaFile;
-import org.homedrop.ReportElement;
+import org.homedrop.meta.MetaFile;
+import org.homedrop.meta.ReportElement;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Rule;
 import org.homedrop.core.model.Tag;

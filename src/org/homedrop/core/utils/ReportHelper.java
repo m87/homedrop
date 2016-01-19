@@ -1,6 +1,6 @@
 package org.homedrop.core.utils;
 
-import org.homedrop.ReportElement;
+import org.homedrop.meta.ReportElement;
 
 import java.util.List;
 

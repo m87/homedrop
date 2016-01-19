@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/commons/commons.iml" filepath="$PROJECT_DIR$/commons/commons.iml" />
       <module fileurl="file://$PROJECT_DIR$/homedrop.iml" filepath="$PROJECT_DIR$/homedrop.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugin/plugin.iml" filepath="$PROJECT_DIR$/plugin/plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/protocol/protocol.iml" filepath="$PROJECT_DIR$/protocol/protocol.iml" />
       <module fileurl="file://$PROJECT_DIR$/testplugin/testplugin.iml" filepath="$PROJECT_DIR$/testplugin/testplugin.iml" />
     </modules>
   </component>

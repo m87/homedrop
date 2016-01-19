@@ -1,4 +1,4 @@
-package org.homedrop;
+package org.homedrop.meta;
 
 public class MetaFile {
     public boolean fileTransfered;

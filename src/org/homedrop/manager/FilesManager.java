@@ -1,13 +1,10 @@
 package org.homedrop.manager;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
-import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.EmptyFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.homedrop.Commons;
-import org.homedrop.MetaFile;
-import org.homedrop.MetaPackage;
+import org.homedrop.RulesCommons;
+import org.homedrop.meta.MetaFile;
+import org.homedrop.meta.MetaPackage;
 import org.homedrop.core.Default;
 import org.homedrop.core.LifeCycle;
 import org.homedrop.core.model.File;
@@ -19,7 +16,6 @@ import org.homedrop.core.utils.LogTag;
 import org.homedrop.core.utils.RulesHelper;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.thirdParty.db.HDDB;
-import org.homedrop.thirdParty.db.SqliteHDDB;
 import org.homedrop.thirdParty.db.sqliteModels.FileEntity;
 
 import java.io.IOException;
@@ -230,7 +226,7 @@ public class FilesManager implements LifeCycle {
 
 
             //get backup rule
-            Rule rule = RulesHelper.getFirst(Default.BACKUP_RULE);
+            Rule rule = RulesHelper.getFirst(RulesCommons.BACKUP_RULE);
             //if null, replace file with new
             if (null == rule) {
                 FileUtils.deleteQuietly(dst);

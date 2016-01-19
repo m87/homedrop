@@ -1,17 +1,14 @@
 package org.homedrop.manager;
 
-import org.homedrop.MetaFile;
-import org.homedrop.MetaTag;
+import org.homedrop.meta.MetaFile;
+import org.homedrop.meta.MetaTag;
 import org.homedrop.core.model.File;
 import org.homedrop.core.model.Tag;
-import org.homedrop.core.model.User;
 import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.thirdParty.db.HDDB;
 import org.homedrop.thirdParty.db.sqliteModels.TagEntity;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class TagsManager {

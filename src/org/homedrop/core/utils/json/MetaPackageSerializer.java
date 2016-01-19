@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.homedrop.MetaPackage;
+import org.homedrop.meta.MetaPackage;
 
 import java.lang.reflect.Type;
 

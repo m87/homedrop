@@ -2,15 +2,12 @@ package org.homedrop.core.utils.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import org.homedrop.MetaFile;
-import org.homedrop.MetaPackage;
+import org.homedrop.meta.MetaFile;
+import org.homedrop.meta.MetaPackage;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 public class JSONConverter {
