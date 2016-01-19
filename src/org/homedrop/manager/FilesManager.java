@@ -40,23 +40,46 @@ public class FilesManager implements LifeCycle {
     private FilesManager() {
     }
 
+    public void copy(String userName, String pathSrc, String pathDst) throws ItemNotFoundException, ItemWithValueAlreadyExistsException, IOException {
+        //TODO boolean for removing entity
+        DBManager.getInstance().getDb().renameFile(userName, pathSrc, pathDst);
+        java.io.File fileSrc = Paths.get(getHome(userName), pathSrc).toFile();
+        java.io.File fileDst = Paths.get(getHome(userName), pathDst).toFile();
+        if (fileSrc.isDirectory()) {
+            FileUtils.copyDirectory(fileSrc, fileDst);
+        } else {
+            FileUtils.copyFile(fileSrc, fileDst);
+        }
+    }
+
+    public void move(String userName, String pathSrc, String pathDst) throws ItemNotFoundException, ItemWithValueAlreadyExistsException, IOException {
+        DBManager.getInstance().getDb().renameFile(userName, pathSrc, pathDst);
+        java.io.File fileSrc = Paths.get(getHome(userName), pathSrc).toFile();
+        java.io.File fileDst = Paths.get(getHome(userName), pathDst).toFile();
+        if (fileSrc.isDirectory()) {
+            FileUtils.moveDirectory(fileSrc, fileDst);
+        } else {
+            FileUtils.moveFile(fileSrc, fileDst);
+        }
+    }
+
     public void rename(String userName, String pathSrc, String pathDst) throws ItemNotFoundException, ItemWithValueAlreadyExistsException {
-            DBManager.getInstance().getDb().renameFile(userName,pathSrc,pathDst);
-            java.io.File fileSrc = Paths.get(getHome(userName),pathSrc).toFile();
-            java.io.File fileDst = Paths.get(getHome(userName),pathDst).toFile();
-            fileSrc.renameTo(fileDst);
+        DBManager.getInstance().getDb().renameFile(userName, pathSrc, pathDst);
+        java.io.File fileSrc = Paths.get(getHome(userName), pathSrc).toFile();
+        java.io.File fileDst = Paths.get(getHome(userName), pathDst).toFile();
+        fileSrc.renameTo(fileDst);
     }
 
 
     public boolean delete(String userName, String path) throws ItemNotFoundException {
-        DBManager.getInstance().getDb().deleteFileByPath(userName,DBHelper.formatPath(path));
+        DBManager.getInstance().getDb().deleteFileByPath(userName, DBHelper.formatPath(path));
         FileUtils.deleteQuietly(new java.io.File(DBHelper.mapUserPathAsString(userName, path)));
 
         return true;
     }
 
-    public boolean removeList(String userName, String path) throws ItemNotFoundException{
-            return FileUtils.deleteQuietly(new java.io.File(Paths.get(getHome(userName),path).toString()));
+    public boolean removeList(String userName, String path) throws ItemNotFoundException {
+        return FileUtils.deleteQuietly(new java.io.File(Paths.get(getHome(userName), path).toString()));
     }
 
     public List<File> list(String userName, String path) {
@@ -170,10 +193,10 @@ public class FilesManager implements LifeCycle {
             } else {
                 Path real = Paths.get(home, file.path);
                 java.io.File realFile = real.toFile();
-               // Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+                // Collection<java.io.File> files = FileUtils.listFilesAndDirs(realFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
                 //for (java.io.File f : files) {
 
-                if(!DBManager.getInstance().getDb().fileExists(userName,DBHelper.formatPath(file.path))) {
+                if (!DBManager.getInstance().getDb().fileExists(userName, DBHelper.formatPath(file.path))) {
                     File entity = new FileEntity();
                     entity.setName(realFile.getName());
                     entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, realFile.getParentFile().getAbsolutePath())));
@@ -228,8 +251,8 @@ public class FilesManager implements LifeCycle {
             //create entity
 
             File entity = null;
-            boolean exists = DBManager.getInstance().getDb().fileExists(userName,DBHelper.formatPath(file.path));
-            if(!exists) {
+            boolean exists = DBManager.getInstance().getDb().fileExists(userName, DBHelper.formatPath(file.path));
+            if (!exists) {
                 entity = new FileEntity();
                 entity.setName(absFile.getName());
                 entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getParent())));
@@ -253,7 +276,7 @@ public class FilesManager implements LifeCycle {
                 FileUtils.deleteQuietly(dst);
                 FileUtils.moveFile(src, dst);
                 //db.deleteFile(db.getFileByPath(relativePath, db.getUserByName(userName)));
-                if(!exists) {
+                if (!exists) {
                     db.addFile(entity);
                 }
 
@@ -261,7 +284,7 @@ public class FilesManager implements LifeCycle {
                 //manage backup
                 Backup.process(rule, userName, specialKey); //move file //TODO manage db
                 FileUtils.moveFile(src, dst);
-                if(!exists) {
+                if (!exists) {
                     db.addFile(entity);
                 }
             }
@@ -281,10 +304,10 @@ public class FilesManager implements LifeCycle {
         return true;
     }
 
-    public static class Backup{
-        public static void process(Rule rule, String userName, int specialKey){}
+    public static class Backup {
+        public static void process(Rule rule, String userName, int specialKey) {
+        }
     }
-
 
 
     @Override
