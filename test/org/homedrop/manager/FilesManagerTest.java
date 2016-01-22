@@ -39,15 +39,15 @@ public class FilesManagerTest {
         user.setHome("home_path");
         when(dbMock.getUserByName(user.getName())).thenReturn(user);
         File[] filesByPath = { new FileEntity(), new FileEntity() };
-        ModelHelpers.setFileFields(filesByPath[0], "fileName", 5621, Date.valueOf("2016-01-05"),
+        ModelHelpers.setFileFields(filesByPath[0], 5621, Date.valueOf("2016-01-05"),
                 user, "test_parent_path", "testpath/", File.FileType.File, 2);
-        ModelHelpers.setFileFields(filesByPath[1], "fileName2", 113, Date.valueOf("2016-01-04"),
+        ModelHelpers.setFileFields(filesByPath[1], 113, Date.valueOf("2016-01-04"),
                 user, "test_parent_path", "testpath/", File.FileType.File, 1);
         List<File> expectedFilesByPath = Arrays.asList(filesByPath);
         String path = "example_path";
-        when(dbMock.getFilesByParentPath(Paths.get(user.getHome(), path).toString(), user)).thenReturn(expectedFilesByPath);
+        when(dbMock.getFilesByParentPath(user.getName(), Paths.get(user.getHome(), path).toString())).thenReturn(expectedFilesByPath);
 
-        List<File> actualFilesByPath = FilesManager.getInstance().list(user.getName(), path);
+        List<File> actualFilesByPath = FilesManager.getInstance().list(user.getName(), Paths.get(user.getHome(), path).toString());
 
         for (File expectedFile : expectedFilesByPath) {
             TestHelpers.assertListContainsItemEqual(actualFilesByPath, expectedFile);

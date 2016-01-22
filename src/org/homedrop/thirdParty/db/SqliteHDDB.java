@@ -1,5 +1,6 @@
 package org.homedrop.thirdParty.db;
 
+import com.esotericsoftware.yamlbeans.parser.CollectionStartEvent;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
@@ -20,6 +21,8 @@ import org.homedrop.thirdParty.db.sqliteModels.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
+
+import static java.util.stream.Collectors.toList;
 
 public class SqliteHDDB implements HDDB {
     public static final long IdFailed = -1;
@@ -89,6 +92,12 @@ public class SqliteHDDB implements HDDB {
         return allRules;
     }
 
+    @Override
+    public List<File> getAllFiles() {
+        List allFiles = getAllFromDao(fileDao);
+        return allFiles;
+    }
+
     private static <T> List<T> getAllFromDao(Dao <T, Long> dao) {
         List<T> allItems = null;
         try {
@@ -104,85 +113,127 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void addFile(File file) {
         FileEntity fileAsEntity = (FileEntity) file;
-        createWithDao(fileDao, fileAsEntity, "File", file.getName());
+        createWithDao(fileDao, fileAsEntity, "File", file.getPath());
     }
 
     @Override
-    public void deleteFile(File file) {
-        deleteFileById(file.getId());
-    }
-
-    @Override
-    public void deleteFileById(long id) {
+    public void deleteFileByPath(String username, String filePath) throws ItemNotFoundException {
         try {
             TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
-                deleteByIdFromDao(fileDao, id, "File");
-                Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
-                foreignIdsToFieldsMap.put("file_id", id);
+                List<File> files = getSubtreeWithRootDirectory(username, filePath);
+                if (0 == files.size()) {
+                    throw new ItemNotFoundException("Attempt to remove not existing files!");
+                }
+
+                List<Long> fileIds = files.stream().map(File::getId).collect(toList());
+
+                Map<String, List<Long>> foreignIdsToFieldsMap = new HashMap<>();
+                foreignIdsToFieldsMap.put("file_id", fileIds);
                 deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
+                // clear file to tag assignments
+
+                List<String> filePaths = files.stream().map(File::getPath).collect(toList());
+                DeleteBuilder<RuleEntity, Long> deleteBuilder = ruleDao.deleteBuilder();
+                deleteBuilder.where().in("filePath", filePaths);
+                deleteBuilder.delete();
+                // remove rules assigned to files to be removed
+
+                deleteByIdFromDao(fileDao, fileIds, "file");
+                // and finally remove requested files
                 return null;
             });
         }
         catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql transaction error! [Could not delete file by id: " + id + "]");
-        }
-    }
-
-    @Override
-    public void deleteFileByPath(String username, String filePath) {
-        try {
-            List<File> files = getSubtreeWithContainingDirectory(username, filePath);
-            /*DeleteBuilder<T, Long> deleteBuilder = weakEntityDao.deleteBuilder();
-            Iterator<Map.Entry<String, Long>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
-            Map.Entry<String, Long> entry = iterator.next();
-            Where<T, Long> where = deleteBuilder.where().eq(entry.getKey(), entry.getValue());
-            while (iterator.hasNext()) {
-                entry = iterator.next();
-                where = where.and().eq(entry.getKey(), entry.getValue());
-            }
-            deleteBuilder.delete();*/
-            DeleteBuilder<FileEntity, Long> deleteBuilder = fileDao.deleteBuilder();
-            String preparedPath = filePath.replace("!", "!!").replace("?", "!?");
-            deleteBuilder.where().raw("path LIKE ? ESCAPE '!' OR path == ?",
-                    new SelectArg("path", DBHelper.formatPath(preparedPath) + "/%"), new SelectArg("path", DBHelper.formatPath(preparedPath)));
-            deleteBuilder.delete();
-        }
-        catch (SQLException e) {
             Log.d(LogTag.DB, "Sql transaction error! [Could not delete files by path: " + filePath + "]");
+            if (e.getCause() instanceof ItemNotFoundException) {
+                throw (ItemNotFoundException) e.getCause();
+            }
         }
     }
 
     @Override
     public void updateFile(File file) throws ItemNotFoundException {
         FileEntity fileAsEntity = (FileEntity) file;
-        updateWithDao(fileDao, fileAsEntity, "File", file.getName());
+        updateWithDao(fileDao, fileAsEntity, "File", file.getPath());
     }
 
     @Override
-    public void renameFile(String username, String pathSrc, String pathDest)
+    public void renameFileReplaceIfNecessary(String username, String pathSrc, String pathDest)
             throws ItemNotFoundException, ItemWithValueAlreadyExistsException {
         //TODO: implement (remember about updating all subtree and rules)
     }
 
     @Override
-    public List<File> getFilesByName(String name) {
-        List<File> filesWithName = getFilesByField(name, "name");
-        return filesWithName;
+    public void renameFile(String username, String pathSrc, String pathDest)
+            throws ItemNotFoundException {
+        //TODO: implement (remember about updating all subtree and rules)
     }
 
     @Override
-    public List<File> getSubtreeWithContainingDirectory(String username, String prefix) {
-//        List<File> filesWithPathPrefix = getFilesByField(owner.getId(), "owner_id");
-//        filesWithPathPrefix.removeIf(file -> !file.getPath().startsWith(prefix));
-//        return filesWithPathPrefix;
-        // TODO: implement
-        return null;
+    public List<File> getSubtreeWithRootDirectory(String username, String prefix) {
+        return getSubtree(username, prefix, true);
     }
 
     @Override
-    public List<File> getFilesByParentPath(String parentPath, User owner) {
-        List<File> filesWithParentPath = getFilesByField(owner.getId(), "owner_id");
-        filesWithParentPath.removeIf(file -> !file.getParentPath().equals(DBHelper.formatPath(parentPath)));
+    public List<File> getSubtreeExcludingRootDirectory(String username, String prefix) {
+        return getSubtree(username, prefix, false);
+    }
+
+    private List<File> getSubtree(String username, String prefix, boolean includeRootDir) {
+        List<File> subtree = new ArrayList<>();
+        String errorMsg = "Sql error! Couldn't get subtree!";
+        try {
+            QueryBuilder<FileEntity, Long> queryBuilder = getSubtreeQueryBuilder(username, prefix, includeRootDir);
+            PreparedQuery<FileEntity> preparedQuery =  queryBuilder.prepare();
+            List<FileEntity> temporary = fileDao.query(preparedQuery);
+            subtree.addAll(temporary);
+        } catch (SQLException e) {
+            Log.d(LogTag.DB, errorMsg);
+        }
+        return subtree;
+    }
+
+    private QueryBuilder<FileEntity, Long> getSubtreeQueryBuilder(String username, String prefix,
+                                                                  boolean includeRootDir) throws SQLException {
+        QueryBuilder<UserEntity, Long> userQueryBuilder = userDao.queryBuilder();
+        userQueryBuilder.where().eq("name", username);
+        QueryBuilder<FileEntity, Long> fileQueryBuilder = fileDao.queryBuilder();
+        addToQueryRelationToSubtree(fileQueryBuilder.where(), prefix, includeRootDir);
+        return fileQueryBuilder.join(userQueryBuilder);
+    }
+
+    private void addToQueryRelationToSubtree(Where<FileEntity, Long> whereClause,
+                                                       String path, boolean includeRootDir) {
+        String preparedPath = path.replace("!", "!!").replace("?", "!?");
+        preparedPath = DBHelper.formatPath(preparedPath);
+        System.out.println(preparedPath);
+        String rawQuery = "(path LIKE ? ESCAPE '!'";
+        SelectArg[] queryParams;
+        if (includeRootDir) {
+            rawQuery += " OR path == ?)";
+            queryParams = new SelectArg[] { new SelectArg("path", preparedPath + "/%"), new SelectArg("path", preparedPath) };
+        }
+        else {
+            rawQuery += ")";
+            queryParams = new SelectArg[] { new SelectArg("path", preparedPath + "/%") };
+        }
+        whereClause.raw(rawQuery, queryParams);
+    }
+
+    @Override
+    public List<File> getFilesByParentPath(String username, String parentPath) {
+        List<File> filesWithParentPath = new ArrayList<>();
+        try {
+            QueryBuilder<UserEntity, Long> userQueryBuilder = userDao.queryBuilder();
+            userQueryBuilder.where().eq("name", username);
+            QueryBuilder<FileEntity, Long> fileQueryBuilder = fileDao.queryBuilder();
+            fileQueryBuilder.where().eq("parentPath", parentPath);
+            PreparedQuery<FileEntity> preparedQuery = fileQueryBuilder.join(userQueryBuilder).prepare();
+            filesWithParentPath.addAll(fileDao.query(preparedQuery));
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Couldn't get files by parentPath!");
+        }
         return filesWithParentPath;
     }
 
@@ -302,8 +353,8 @@ public class SqliteHDDB implements HDDB {
         try {
             TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
                 deleteByIdFromDao(tagDao, id, "Tag");
-                Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
-                foreignIdsToFieldsMap.put("tag_id", id);
+                Map<String, List<Long>> foreignIdsToFieldsMap = new HashMap<>();
+                foreignIdsToFieldsMap.put("tag_id", Collections.singletonList(id));
                 deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
                 return null;
             });
@@ -345,7 +396,7 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void addRule(Rule rule) {
         RuleEntity ruleAsEntity = (RuleEntity) rule;
-        createWithDao(ruleDao, ruleAsEntity, "Rule", "" + rule.getId());
+        createWithDao(ruleDao, ruleAsEntity, "Rule", "" + rule.getFilePath());
     }
 
     @Override
@@ -372,21 +423,13 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<Rule> getValidRulesByFile(File file) {
-        List<Rule>validRules = new ArrayList<>();
+        List<Rule> validRules = new ArrayList<>();
         try {
-            Where<RuleEntity, Long> whereClause = ruleDao.queryBuilder().where();
-            Date today = new Date();
-            whereClause.and(
-                    whereClause.or(whereClause.isNull("filePath"), whereClause.eq("filePath", file.getPath())),
-                    whereClause.or(whereClause.isNull("holdsSince"), whereClause.le("holdsSince", today)),
-                    whereClause.or(whereClause.isNull("holdsUntil"), whereClause.ge("holdsUntil", today)));
-            PreparedQuery<RuleEntity> preparedQuery = whereClause.prepare();
-            List<RuleEntity> temporary = ruleDao.query(preparedQuery);
-            validRules.addAll(temporary);
+            User owner = getUserById(file.getOwnerId());
+            validRules = getRules(owner.getName(), -1, file.getPath(), true);
         }
-        catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [Could not get valid rules by file!]");
-            e.printStackTrace();
+        catch (ItemNotFoundException e) {
+            Log.d(LogTag.DB, "Couldn't find owner of requested file to get rules for!");
         }
         return validRules;
     }
@@ -395,29 +438,29 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public List<Rule> getValidGlobalRules(String username) {
-        List<Rule> validGlobalRules = getRules(username, AnyType, null);
+        List<Rule> validGlobalRules = getRules(username, AnyType, null, false);
         return validGlobalRules;
     }
 
     @Override
     public List<Rule> getValidGlobalRulesByType(String username, int type) {
-        List<Rule> validGlobalRulesByType = getRules(username, type, null);
+        List<Rule> validGlobalRulesByType = getRules(username, type, null, false);
         return validGlobalRulesByType;
     }
 
     @Override
     public List<Rule> getValidSpecificRulesByType(String username, int type, String filePath) {
-        List<Rule> validSpecificRulesByType = getRules(username, type, filePath);
+        List<Rule> validSpecificRulesByType = getRules(username, type, filePath, false);
         return validSpecificRulesByType;
     }
 
     @Override
     public boolean ruleExists(String username, String filePath) {
-        List<Rule> rules = getRules(username, -1, filePath);
+        List<Rule> rules = getRules(username, -1, filePath, false);
         return rules.size() > 0;
     }
 
-    private List<Rule> getRules(String username, Integer type, String filePath) {
+    private List<Rule> getRules(String username, Integer type, String filePath, boolean getGlobalAndSpecific) {
         List<Rule>rules = new ArrayList<>();
         try {
             User user = getUserByName(username);
@@ -433,7 +476,13 @@ public class SqliteHDDB implements HDDB {
                 whereClause.eq("type", type);
                 ++clauseCount;
             }
-            if (null != filePath) {
+            if (null != filePath && getGlobalAndSpecific) {
+                whereClause.or(
+                        whereClause.eq("filePath", filePath),
+                        whereClause.isNull("filePath")
+                );
+            }
+            else if (null != filePath) {
                 whereClause.eq("filePath", filePath);
             }
             else {
@@ -465,23 +514,35 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public void unassignTag(File file, Tag tag) {
-        Map<String, Long> foreignIdsToFieldsMap = new HashMap<>();
-        foreignIdsToFieldsMap.put("file_id", file.getId());
-        foreignIdsToFieldsMap.put("tag_id", tag.getId());
+        Map<String, List<Long>> foreignIdsToFieldsMap = new HashMap<>();
+        foreignIdsToFieldsMap.put("file_id", Collections.singletonList(file.getId()));
+        foreignIdsToFieldsMap.put("tag_id", Collections.singletonList(tag.getId()));
         deleteFromWeakEntity(fileTagDao, foreignIdsToFieldsMap, "FileTag");
     }
 
     private static <T> void deleteFromWeakEntity(Dao<T, Long> weakEntityDao,
-                                                 Map<String, Long> foreignIdsToFieldsMap, String entityName) {
+                                                 Map<String, List<Long>> foreignIdsToFieldsMap, String entityName) {
         try {
             DeleteBuilder<T, Long> deleteBuilder = weakEntityDao.deleteBuilder();
-            Iterator<Map.Entry<String, Long>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
-            Map.Entry<String, Long> entry = iterator.next();
-            Where<T, Long> where = deleteBuilder.where().eq(entry.getKey(), entry.getValue());
+            Iterator<Map.Entry<String, List<Long>>> iterator = foreignIdsToFieldsMap.entrySet().iterator();
+            Map.Entry<String, List<Long>> entry = iterator.next();
+            Where<T, Long> where = deleteBuilder.where();
+            if (1 == entry.getValue().size()) {
+                where.eq(entry.getKey(), entry.getValue().get(0));
+            }
+            else {
+                where.in(entry.getKey(), entry.getValue());
+            }
             while (iterator.hasNext()) {
                 entry = iterator.next();
-                where = where.and().eq(entry.getKey(), entry.getValue());
+                if (1 == entry.getValue().size()) {
+                    where.and().eq(entry.getKey(), entry.getValue().get(0));
+                }
+                else {
+                    where.and().in(entry.getKey(), entry.getValue());
+                }
             }
+            Log.d(LogTag.DB, deleteBuilder.prepareStatementString());
             deleteBuilder.delete();
         }
         catch (SQLException e) {
@@ -580,12 +641,20 @@ public class SqliteHDDB implements HDDB {
     }
 
     private void deleteByIdFromDao(Dao dao, long id, String entityName) {
+        deleteByIdFromDao(dao, Collections.singletonList(id), entityName);
+    }
+
+    private void deleteByIdFromDao(Dao dao, List<Long> ids, String entityName) {
         try {
-            dao.deleteById(id);
-            Log.i(LogTag.DB, entityName + " entity deleted ::" + id);
+            int size = dao.deleteIds(ids);
+            Log.i(LogTag.DB, "" + ids.size());
+            Log.i(LogTag.DB, "" + size);
+            Log.i(LogTag.DB, entityName + " a group of entities successfully deleted.");
         } catch (SQLException e) {
-            Log.d(LogTag.DB, "Sql error! [" + entityName + " deletion :: "+id+" ]");
+            Log.d(LogTag.DB, "Sql error! [" + entityName + " deletion :: "+e.getMessage()+" ]");
             e.printStackTrace();
         }
     }
+
+
 }

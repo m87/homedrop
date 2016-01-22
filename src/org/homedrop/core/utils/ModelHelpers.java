@@ -16,9 +16,8 @@ public class ModelHelpers {
         user.setHome(home);
     }
 
-    public static void setFileFields(File file, String name, long checkSum, Date lastChange,
+    public static void setFileFields(File file, long checkSum, Date lastChange,
                                      User owner, String parentPath, String path, File.FileType type, long version) {
-        file.setName(name);
         file.setCheckSum(checkSum);
         file.setLastChange(lastChange);
         file.setOwner(owner);
@@ -66,9 +65,6 @@ public class ModelHelpers {
             return false;
         }
         if (false == file1.getLastChange().equals(file2.getLastChange())) {
-            return false;
-        }
-        if (false == file1.getName().equals(file2.getName())) {
             return false;
         }
         if (file1.getOwnerId() != file2.getOwnerId()) {

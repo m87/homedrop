@@ -85,15 +85,9 @@ public class FilesManager implements LifeCycle {
     public List<File> list(String userName, String path) {
         //TODO patse path as path|#tag#tag#tag
         Log.d(LogTag.DEV, path);
-        List<File> out = new ArrayList<>();
-        try {
-            Path p = Paths.get(path);
-            HDDB db = DBManager.getInstance().getDb();
-            User owner = db.getUserByName(userName);
-            out = db.getFilesByParentPath(p.toString(), owner);
-        } catch (ItemNotFoundException e) {
-            Log.d(LogTag.DB, "Could not retrieve user's home!");
-        }
+        Path p = Paths.get(path);
+        HDDB db = DBManager.getInstance().getDb();
+        List<File> out = db.getFilesByParentPath(userName, path);
         return out;
     }
 
@@ -105,7 +99,6 @@ public class FilesManager implements LifeCycle {
                 FileEntity fe = new FileEntity();
                 fe.setPath(DBHelper.removeHome(userName, file.getPath()));
                 fe.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
-                fe.setName(file.getName());
                 fe.setParentPath(file.getParent());
                 DBManager.getInstance().getDb().addFile(fe);
             }
@@ -198,7 +191,6 @@ public class FilesManager implements LifeCycle {
 
                 if (!DBManager.getInstance().getDb().fileExists(userName, DBHelper.formatPath(file.path))) {
                     File entity = new FileEntity();
-                    entity.setName(realFile.getName());
                     entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, realFile.getParentFile().getAbsolutePath())));
                     entity.setPath(DBHelper.formatPath(DBHelper.removeHome(userName, realFile.getAbsolutePath())));
                     entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));
@@ -254,7 +246,6 @@ public class FilesManager implements LifeCycle {
             boolean exists = DBManager.getInstance().getDb().fileExists(userName, DBHelper.formatPath(file.path));
             if (!exists) {
                 entity = new FileEntity();
-                entity.setName(absFile.getName());
                 entity.setParentPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getParent())));
                 entity.setPath(DBHelper.formatPath(DBHelper.removeHome(userName, absFile.getAbsolutePath())));
                 entity.setOwner(DBManager.getInstance().getDb().getUserByName(userName));

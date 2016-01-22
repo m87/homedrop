@@ -18,6 +18,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.*;
 
@@ -101,11 +102,11 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllUsers() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
 
         List<User> allUsers = sqliteHDDB.getAllUsers();
 
-        assertEquals(allUsers.size(), users.length);
+        assertEquals(allUsers.size(), users.size());
         for (User expectedUser : users) {
             TestHelpers.assertListContainsItemEqual(allUsers, expectedUser);
         }
@@ -113,288 +114,378 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetAllRules() throws Exception {
-        User[] users = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(users, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
         List<Rule> allRules = sqliteHDDB.getAllRules();
 
-        assertEquals(rules.length, allRules.size());
-        for (Rule expectedRule : rules) {
+        assertEquals(descToRuleMap.size(), allRules.size());
+        for (Rule expectedRule : descToRuleMap.values()) {
             TestHelpers.assertListContainsItemEqual(allRules, expectedRule);
         }
     }
 
     @Test
-    public void testAddFile() throws Exception {
-        File[] files = prepareFilesForTest();
-        assertCollectionIsConsistentWithDb(files, File.class, "Id");
+    public void testGetAllFiles() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> files = prepareFilesForTest(owners);
+
+        List<File> allFiles = sqliteHDDB.getAllFiles();
+
+        assertEquals(files.size(), allFiles.size());
+        for (File expectedFile : files.values()) {
+            TestHelpers.assertListContainsItemEqual(allFiles, expectedFile);
+        }
     }
 
     @Test
-    public void testDeleteFile() throws Exception {
-        File[] files = prepareFilesForTest();
-        deleteItemTestTemplate(files, File.class);
+    public void testAddFile() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        assertCollectionIsConsistentWithDb(pathToFileMap.values(), File.class, "Id");
     }
 
     @Test
     public void testDeleteFileByPathWhenDirectoryIsDeleted() throws Exception {
-        File[] files = prepareFilesForTest();
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<String, List<String>> tagAssignmentsToDelete = new HashMap<>();
+        tagAssignmentsToDelete.put("testpath/location/name.ext", Arrays.asList("testtag", "testtag2"));
+        tagAssignmentsToDelete.put("testpath/location", Arrays.asList("testtag"));
+        Map<String, List<String>> tagAssignmentsToRemain = new HashMap<>();
+        tagAssignmentsToRemain.put("testpath/location2/oname.ext", Arrays.asList("testtag2"));
+        for (Map<String, List<String>> assignmentMap : Arrays.asList(tagAssignmentsToDelete, tagAssignmentsToRemain)) {
+            for (Map.Entry<String, List<String>> pathToTag : assignmentMap.entrySet()) {
+                for (String tagName : pathToTag.getValue()) {
+                    File file = pathToFileMap.get(pathToTag.getKey());
+                    sqliteHDDB.assignTag(file, nameToTagMap.get(tagName));
+                }
+            }
+        }
 
-        sqliteHDDB.deleteFileByPath(files[0].getOwner().getName(), "testpath/location");
+        String path = "testpath/location";
+        sqliteHDDB.deleteFileByPath(pathToFileMap.get(path).getOwner().getName(), path);
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/location");
-        assertEquals(1, actualFiles.size());
+        assertItemsProperlyDeletedWhileFileDeleting(pathToFileMap.values(), sqliteHDDB.getAllFiles(), path);
+        assertItemsProperlyDeletedWhileFileDeleting(descToRuleMap.values(), sqliteHDDB.getAllRules(), path);
+
+        assertTagAssignmentsProperlyDeletedWhileFileDeleting(tagAssignmentsToDelete, nameToTagMap, false);
+        assertTagAssignmentsProperlyDeletedWhileFileDeleting(tagAssignmentsToRemain, nameToTagMap, true);
     }
 
     @Test
     public void testDeleteFileByPathWhenSingleFileIsDeleted() throws Exception {
-        File[] files = prepareFilesForTest();
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        String path = "testpath/location/otherdir/oname.ext";
+        sqliteHDDB.assignTag(pathToFileMap.get(path), nameToTagMap.get("testtag"));
 
-        sqliteHDDB.deleteFileByPath(files[0].getOwner().getName(), "testpath/location/name.ext");
+        sqliteHDDB.deleteFileByPath(pathToFileMap.get(path).getOwner().getName(), path);
 
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/location");
+        assertItemsProperlyDeletedWhileFileDeleting(pathToFileMap.values(), sqliteHDDB.getAllFiles(), path);
+        assertItemsProperlyDeletedWhileFileDeleting(descToRuleMap.values(), sqliteHDDB.getAllRules(), path);
+
+        assertEquals(0, sqliteHDDB.getFilesByTag(nameToTagMap.get("testtag")).size());
     }
 
     @Test
-    public void testDeleteFileUnassignTags() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+    public void testDeleteFileByPathWhenFileDoesNotExists() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        String path = "testpath/notExistingPath";
 
-        long deletedFileId = files[0].getId();
-        sqliteHDDB.deleteFile(files[0]);
-        List<Tag> actualTagsOfDeletedFile = sqliteHDDB.getFileTagsById(deletedFileId);
-        assertEquals(0, actualTagsOfDeletedFile.size());
+        try {
+            sqliteHDDB.deleteFileByPath(owners.get(0).getName(), path);
+            fail();
+        }
+        catch (ItemNotFoundException e) {}
+        try {
+            sqliteHDDB.deleteFileByPath("notExistingName", path);
+            fail();
+        }
+        catch (ItemNotFoundException e) {}
     }
 
-    @Test
-    public void testDeleteFileById() throws Exception {
-        File[] files = prepareFilesForTest();
-        deleteItemByIdTestTemplate(files, File.class);
+    void assertItemsProperlyDeletedWhileFileDeleting(Collection<? extends Identifiable> items, List<? extends Identifiable> actualItems, String path) {
+        List<? extends Identifiable> expectedItems = items.stream().filter(item -> {
+            if (item instanceof File) {
+                return !doesPathBelongToTree(((File)item).getPath(), path);
+            }
+            else {
+                return !doesRuleBelongToTree(((Rule)item), path);
+            }
+        }).collect(toList());
+        assertEquals(expectedItems.size(), actualItems.size());
+        List<Identifiable> typedActualItems = new ArrayList<Identifiable>();
+        typedActualItems.addAll(actualItems);
+        for (Identifiable expectedItem : expectedItems) {
+            TestHelpers.assertListContainsItemEqual(typedActualItems, expectedItem);
+        }
+    }
+
+    void assertTagAssignmentsProperlyDeletedWhileFileDeleting(Map<String, List<String>> tagAssignments,
+                                                              Map<String, Tag> nameToTagMap, boolean assertValue) {
+        for (Map.Entry<String, List<String>> pathToTags : tagAssignments.entrySet()) {
+            for (String tagName : pathToTags.getValue()) {
+                List<File> files = sqliteHDDB.getFilesByTag(nameToTagMap.get(tagName));
+                assertEquals(assertValue, files.removeIf(file -> pathToTags.getKey().equals(file.getPath())));
+            }
+        }
+    }
+
+    boolean doesRuleBelongToTree(Rule rule, String rootPath) {
+        return null != rule.getFilePath() && doesPathBelongToTree(rule.getFilePath(), rootPath);
+    }
+
+    boolean doesPathBelongToTree(String testedPath, String rootPath) {
+        return testedPath.startsWith(rootPath + "/") || rootPath.equals(testedPath);
     }
 
     @Test
     public void testUpdateFile() throws Exception {
-        File[] files = prepareFilesForTest();
-        String expectedName = "newName";
-        files[2].setName(expectedName);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        String expectedPath = "testpath";
+        pathToFileMap.get("testpath/location/name.ext").setPath(expectedPath);
         long expectedVersion = 820;
-        files[2].setVersion(expectedVersion);
-        User owner = new UserEntity();
-        owner.setId(files[2].getOwnerId()+1);
-        files[2].setOwner(owner);
+        pathToFileMap.get("testpath/location/name.ext").setVersion(expectedVersion);
+        User owner = owners.get(1);
+        pathToFileMap.get("testpath/location/name.ext").setOwner(owner);
         ModelHelpers.setUserFields(owner, "testuser2", "pass2", "home_testuser2");
 
-        sqliteHDDB.updateFile(files[2]);
+        sqliteHDDB.updateFile(pathToFileMap.get("testpath/location/name.ext"));
 
-        assertCollectionIsConsistentWithDb(files, File.class, "Id");
+        assertCollectionIsConsistentWithDb(pathToFileMap.values(), File.class, "Id");
     }
 
     @Test(expected=ItemNotFoundException.class)
     public void testUpdateFileWhenFileDoesNotExist() throws Exception {
-        File[] files = prepareFilesForTest();
-        String expectedName = "notExisting";
-        files[1].setName(expectedName);
-        files[1].setId(999);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        String expectedName = "notExistingPath";
+        pathToFileMap.get("testpath/location").setPath(expectedName);
+        pathToFileMap.get("testpath/location").setId(999);
 
-        sqliteHDDB.updateFile(files[1]);
+        sqliteHDDB.updateFile(pathToFileMap.get("testpath/location"));
     }
 
     @Test
-    public void testGetFilesByName() throws Exception {
-        File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[3] };
+    public void testGetSubtreeMethods() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, File[]> methodNameToExpectedFilesMap = new HashMap<>();
+        methodNameToExpectedFilesMap.put("getSubtreeWithRootDirectory",
+                                         new File[] { pathToFileMap.get("testpath/location"), pathToFileMap.get("testpath/location/name.ext"),
+                                                      pathToFileMap.get("testpath/location/otherdir"), pathToFileMap.get("testpath/location/otherdir/oname.ext") });
+        methodNameToExpectedFilesMap.put("getSubtreeExcludingRootDirectory",
+                                         new File[] { pathToFileMap.get("testpath/location/name.ext"),
+                                                      pathToFileMap.get("testpath/location/otherdir"), pathToFileMap.get("testpath/location/otherdir/oname.ext") });
+        assertSubtreeMethodWorksCorrectly(pathToFileMap.get("testpath/location").getOwner().getName(),
+                                          "testpath/location", methodNameToExpectedFilesMap);
 
-        List<File> actualFiles = sqliteHDDB.getFilesByName("fileName");
+        methodNameToExpectedFilesMap.clear();
+        methodNameToExpectedFilesMap.put("getSubtreeWithRootDirectory", new File[] { pathToFileMap.get("testpath/location2/oname.ext") });
+        methodNameToExpectedFilesMap.put("getSubtreeExcludingRootDirectory", new File[] { pathToFileMap.get("testpath/location2/oname.ext") });
 
-        assertEquals(expectedFiles.length, actualFiles.size());
-        for (File expectedFile : expectedFiles) {
-            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        assertSubtreeMethodWorksCorrectly(pathToFileMap.get("testpath/location2/oname.ext").getOwner().getName(),
+                                          "testpath/location2", methodNameToExpectedFilesMap);
+    }
+
+    @Test
+    public void testSubtreeMethodsWhenPrefixDoesNotExist() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, File[]> methodNameToExpectedFilesMap = new HashMap<>();
+        methodNameToExpectedFilesMap.put("getSubtreeWithRootDirectory", new File[] {});
+        methodNameToExpectedFilesMap.put("getSubtreeExcludingRootDirectory", new File[] {});
+
+        assertSubtreeMethodWorksCorrectly(pathToFileMap.get("testpath/location").getOwner().getName(),
+                                          "notExistingPrefix", methodNameToExpectedFilesMap);
+    }
+
+    @Test
+    public void testGetSubtreeWithRootDirectoryWhenOwnerDoesNotFit() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, File[]> methodNameToExpectedFilesMap = new HashMap<>();
+        methodNameToExpectedFilesMap.put("getSubtreeWithRootDirectory", new File[] {});
+        methodNameToExpectedFilesMap.put("getSubtreeExcludingRootDirectory", new File[] {});
+
+        assertSubtreeMethodWorksCorrectly("notExistingName", "testpath", methodNameToExpectedFilesMap);
+        assertSubtreeMethodWorksCorrectly(pathToFileMap.get("test_parent_path2/testpath").getOwner().getName(),
+                                          "testpath", methodNameToExpectedFilesMap);
+    }
+
+    private void assertSubtreeMethodWorksCorrectly(String username, String filePath, Map<String, File[]> methodToExpectedFileMap)
+        throws Exception {
+        for (Map.Entry<String, File[]> methodNameToExpectedFiles : methodToExpectedFileMap.entrySet()) {
+            Method method = SqliteHDDB.class.getDeclaredMethod(methodNameToExpectedFiles.getKey(), String.class, String.class);
+            List<File> actualFiles = (List<File>)method.invoke(sqliteHDDB, username, filePath);
+            File[] expectedFiles = methodNameToExpectedFiles.getValue();
+            assertEquals(expectedFiles.length, actualFiles.size());
+            for (File expectedFile : expectedFiles) {
+                TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+            }
         }
-    }
-
-    @Test
-    public void testGetFilesByNameWhenFileDoesNotExist() throws Exception {
-        File[] files = prepareFilesForTest();
-
-        List<File> actualFiles = sqliteHDDB.getFilesByName("notExistingName");
-
-        assertEquals(0, actualFiles.size());
-    }
-
-    @Test
-    public void testGetSubtreeWithContainingDirectory() throws Exception {
-        File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[0], files[1], files[2] };
-
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "testpath/");
-
-        assertEquals(expectedFiles.length, actualFiles.size());
-        for (File expectedFile : expectedFiles) {
-            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
-        }
-
-        expectedFiles = new File[] { files[2] };
-        actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[2].getOwner().getName(), "testpath/location2/");
-        assertEquals(expectedFiles.length, actualFiles.size());
-    }
-
-    @Test
-    public void testSubtreeWithContainingDirectoryWhenPrefixDoesNotExist() throws Exception {
-        File[] files = prepareFilesForTest();
-
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(files[0].getOwner().getName(), "notExistingPrefix/");
-
-        assertEquals(0, actualFiles.size());
-    }
-
-    @Test
-    public void testGetAllFilesByPathPrefixWhenOwnerDoesNotExist() throws Exception {
-        File[] files = prepareFilesForTest();
-        User notExistingOwner = files[3].getOwner();
-        notExistingOwner.setId(9999);
-        List<File> actualFiles = sqliteHDDB.getSubtreeWithContainingDirectory(notExistingOwner.getName(), "testpath/");
-
-        assertEquals(0, actualFiles.size());
     }
 
     @Test
     public void testGetFileByPath() throws Exception {
-        File[] files = prepareFilesForTest();
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
         String[] fieldNames = new String[] {"Path", "Owner"};
-        assertCollectionIsConsistentWithDb(files, File.class, fieldNames);
+        assertCollectionIsConsistentWithDb(pathToFileMap.values(), File.class, fieldNames);
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testGetFileByPathWhenFileDoesNotOccur() throws Exception {
-        File[] files = prepareFilesForTest();
-        sqliteHDDB.getFileByPath("notExistingPath", files[0].getOwner());
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        sqliteHDDB.getFileByPath("notExistingPath", pathToFileMap.get("testpath/location").getOwner());
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testGetFileByPathWhenOwnerDoesNotOccur() throws Exception {
-        File[] files = prepareFilesForTest();
-        User notExistingOwner = files[3].getOwner();
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        User notExistingOwner = pathToFileMap.get("testpath/location/name.ext").getOwner();
         notExistingOwner.setId(9999);
-        sqliteHDDB.getFileByPath(files[2].getPath(), notExistingOwner);
+        sqliteHDDB.getFileByPath("testpath/location/name.ext", notExistingOwner);
     }
 
     @Test
     public void testGetFilesByParentPath() throws Exception {
-        File[] files = prepareFilesForTest();
-        File[] expectedFiles = { files[1], files[2] };
-        User owner = sqliteHDDB.getUserByName("testuser");
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        String[] expectedFileNames = { "testpath/location/name.ext", "testpath/location/otherdir" };
+        User owner = owners.get(0);
 
-        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("testpath/location", owner);
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("testuser", "testpath/location");
 
-        assertEquals(expectedFiles.length, actualFiles.size());
-        for (File expectedFile : expectedFiles) {
-            TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
+        assertEquals(expectedFileNames.length, actualFiles.size());
+        for (String expectedFileName : expectedFileNames) {
+            TestHelpers.assertListContainsItemEqual(actualFiles, pathToFileMap.get(expectedFileName));
         }
     }
 
     @Test
     public void testGetFilesByParentPathWhenFileDoesNotExist() throws Exception {
-        File[] files = prepareFilesForTest();
-        User owner = sqliteHDDB.getUserByName("testuser");
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
 
-        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("notExistingPath", owner);
+        List<File> actualFiles = sqliteHDDB.getFilesByParentPath("testuser", "notExistingPath");
 
         assertEquals(0, actualFiles.size());
     }
 
     @Test
     public void testGetFilesByParentPathWhenOwnerDoesNotOccur() throws Exception {
-        File[] files = prepareFilesForTest();
-        User notExistingOwner = files[3].getOwner();
-        notExistingOwner.setId(9999);
-        sqliteHDDB.getFilesByParentPath(files[2].getPath(), notExistingOwner);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        sqliteHDDB.getFilesByParentPath("notExistingOwner", "testpath/location");
     }
 
     @Test
     public void testFileExists() throws Exception {
-        File[] files = prepareFilesForTest();
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
 
-        assertTrue(sqliteHDDB.fileExists(files[1].getOwner().getName(), files[1].getPath()));
-        assertFalse(sqliteHDDB.fileExists(files[1].getOwner().getName(), "notExistingPath"));
+        assertTrue(sqliteHDDB.fileExists("testuser2", "test_parent_path2/testpath"));
+        assertFalse(sqliteHDDB.fileExists("testuser2", "notExistingPath"));
     }
 
-    public File[] prepareFilesForTest() {
-        User[] owners = prepareUsersForTest();
-        FileEntity[] files = {
-                new FileEntity(),
-                new FileEntity(),
-                new FileEntity(),
-                new FileEntity(),
-                new FileEntity(),
-                new FileEntity(),
-                new FileEntity()
-        };
+    public Map<String, File> prepareFilesForTest(List<User> owners) {
+        Map<String, File> pathToFileMap = new HashMap<>();
+
         Date firstDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 4));
         Date secondDate = ModelHelpers.makeDateFromLocalDate(LocalDate.of(2016, 1, 5));
-        ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "testpath", "testpath/location", File.FileType.Directory, 2);
-        ModelHelpers.setFileFields(files[1], "fileName2", 531, secondDate,
-                owners[0], "testpath/location", "testpath/location/name.ext", File.FileType.File, 2);
-        ModelHelpers.setFileFields(files[2], "fileName21", 7823, firstDate,
-                owners[0], "testpath/location", "testpath/location/otherdir", File.FileType.Directory, 4);
-        ModelHelpers.setFileFields(files[3], "fileName22", 74, firstDate,
-                owners[0], "testpath/location/otherdir", "testpath/location/otherdir/oname.ext", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[4], "fileName23", 321, secondDate,
-                owners[0], "testpath/location2/", "testpath/location2/oname.ext", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[5], "fileName3", 113, firstDate,
-                owners[0], "testpath2", "testpath2/location2.ext", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[6], "fileName", 585, secondDate,
-                owners[1], "test_parent_path1", "test_parent_path1/testpath", File.FileType.File, 4);
+        pathToFileMap.put("testpath", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath"), 8998, firstDate,
+                owners.get(0), "/", "testpath", File.FileType.Directory, 3);
 
-        for (File file : files) {
+        pathToFileMap.put("testpath/location", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath/location"), 5621, secondDate,
+                owners.get(0), "testpath", "testpath/location", File.FileType.Directory, 2);
+
+        pathToFileMap.put("testpath/location/name.ext", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath/location/name.ext"), 531, secondDate,
+                owners.get(0), "testpath/location", "testpath/location/name.ext", File.FileType.File, 2);
+
+        pathToFileMap.put("testpath/location/otherdir", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath/location/otherdir"), 7823, firstDate,
+                owners.get(0), "testpath/location", "testpath/location/otherdir", File.FileType.Directory, 4);
+
+        pathToFileMap.put("testpath/location/otherdir/oname.ext", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath/location/otherdir/oname.ext"), 74, firstDate,
+                owners.get(0), "testpath/location/otherdir", "testpath/location/otherdir/oname.ext", File.FileType.File, 1);
+
+        pathToFileMap.put("testpath/location2/oname.ext", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath/location2/oname.ext"), 321, secondDate,
+                owners.get(0), "testpath/location2/", "testpath/location2/oname.ext", File.FileType.File, 1);
+
+        pathToFileMap.put("testpath2/location2.ext", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("testpath2/location2.ext"), 113, firstDate,
+                owners.get(0), "testpath2", "testpath2/location2.ext", File.FileType.File, 1);
+
+        pathToFileMap.put("test_parent_path2/testpath", new FileEntity());
+        ModelHelpers.setFileFields(pathToFileMap.get("test_parent_path2/testpath"), 585, secondDate,
+                owners.get(1), "test_parent_path2", "test_parent_path2/testpath", File.FileType.File, 4);
+
+        for (File file : pathToFileMap.values()) {
             sqliteHDDB.addFile(file);
         }
 
-        return files;
+        return pathToFileMap;
     }
 
-    public static void deleteItemTestTemplate(Identifiable[] items, Class itemType) throws Exception {
+    public static void deleteItemTestTemplate(Collection<? extends Identifiable> itemCollection, Class itemType) throws Exception {
         HDDB sqliteHDDBMock = mock(SqliteHDDB.class);
         Method deleteMethod = SqliteHDDB.class.getDeclaredMethod("delete" + itemType.getSimpleName(), itemType);
 
-        deleteMethod.invoke(sqliteHDDBMock, items[0]);
+        List<? extends Identifiable> items = new ArrayList<>(itemCollection);
+        deleteMethod.invoke(sqliteHDDBMock, items.get(0));
 
         HDDB verifyMock = verify(sqliteHDDBMock, times(1));
-        deleteMethod.invoke(verifyMock, items[0]);
+        deleteMethod.invoke(verifyMock, items.get(0));
         verifyNoMoreInteractions(sqliteHDDBMock);
     }
 
-    public static void deleteItemByIdTestTemplate(Identifiable[] items, Class itemType) throws Exception {
+    public static void deleteItemByIdTestTemplate(List<? extends Identifiable> items, Class itemType) throws Exception {
         Method deleteMethod = SqliteHDDB.class.getDeclaredMethod("delete" + itemType.getSimpleName() + "ById", Long.TYPE);
 
-        deleteMethod.invoke(sqliteHDDB, items[0].getId());
+        deleteMethod.invoke(sqliteHDDB, items.get(0).getId());
 
         Method getByIdMethod = SqliteHDDB.class.getDeclaredMethod("get" + itemType.getSimpleName() + "ById", Long.TYPE);
         try {
-            Identifiable item = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[0].getId());
+            Identifiable item = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items.get(0).getId());
             fail("Expected an exception");
         }
         catch (InvocationTargetException e) {
             assertThat(e.getCause(), instanceOf(ItemNotFoundException.class));
         }
-        Identifiable actualItem = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items[1].getId());
+        Identifiable actualItem = (Identifiable) getByIdMethod.invoke(sqliteHDDB, items.get(1).getId());
         Method areFieldsEqualMethod = areItemsEqualMethodsMap.get(itemType);
-        assertTrue((boolean)areFieldsEqualMethod.invoke(null, items[1], actualItem));
+        assertTrue((boolean)areFieldsEqualMethod.invoke(null, items.get(1), actualItem));
     }
 
     @Test
     public void testAddUser() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         assertCollectionIsConsistentWithDb(users, User.class, "Id");
     }
 
-    public void assertCollectionIsConsistentWithDb(Identifiable[] items, Class itemType, String getterFieldName) throws Exception {
+    public void assertCollectionIsConsistentWithDb(Collection<? extends Identifiable> items, Class itemType, String getterFieldName) throws Exception {
         assertCollectionIsConsistentWithDb(items, itemType, new String[] {getterFieldName});
     }
 
-    public void assertCollectionIsConsistentWithDb(Identifiable[] items, Class itemType, String[] getterFieldNames) throws Exception {
+    public void assertCollectionIsConsistentWithDb(Collection<? extends Identifiable> items, Class itemType, String[] getterFieldNames) throws Exception {
         Method getByFieldMethod = SqliteHDDB.class
                 .getDeclaredMethod("get" + itemType.getSimpleName() + "By" + getterFieldNames[0], fieldTypesMap.get(getterFieldNames[0]));
         List<Method> getFieldFromItemMethods = new ArrayList<>();
@@ -415,39 +506,39 @@ public class SqliteHDDBTest {
 
     @Test
     public void testAddUserWhenUserAlreadyExists() {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
 
-        sqliteHDDB.addUser(users[0]);
+        sqliteHDDB.addUser(users.get(0));
 
-        assertEquals(SqliteHDDB.IdFailed, users[0].getId());
+        assertEquals(SqliteHDDB.IdFailed, users.get(0).getId());
     }
 
     @Test
     public void testDeleteUserById() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         deleteItemByIdTestTemplate(users, User.class);
     }
 
     @Test
     public void testDeleteUser() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         deleteItemTestTemplate(users, User.class);
     }
 
     @Test
     public void testUpdateUser() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         String expectedName = "newName";
-        users[0].setName(expectedName);
+        users.get(0).setName(expectedName);
 
-        sqliteHDDB.updateUser(users[0]);
+        sqliteHDDB.updateUser(users.get(0));
 
         assertCollectionIsConsistentWithDb(users, User.class, "Id");
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testUpdateUserWhenUserDoesNotExist() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         User notExistingUser = new UserEntity();
         ModelHelpers.setUserFields(notExistingUser, "foo", "foo", "foo");
         notExistingUser.setId(999);
@@ -457,24 +548,24 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetUserByName() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
         assertCollectionIsConsistentWithDb(users, User.class, "Name");
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testGetUserByNameWhenNameDoesNotOccur() throws Exception {
-        User[] users = prepareUsersForTest();
+        List<User> users = prepareUsersForTest();
 
         User user = sqliteHDDB.getUserByName("notOccurringName");
     }
 
-    public User[] prepareUsersForTest() {
-        User[] users = {
-                new UserEntity(),
-                new UserEntity()
-        };
-        ModelHelpers.setUserFields(users[0], "testuser", "pass", "testuser_home");
-        ModelHelpers.setUserFields(users[1], "testuser2", "pass2", "home_testuser2");
+    public List<User> prepareUsersForTest() {
+        List<User> users = new ArrayList<>();
+        for (int i = 0; i < 2; ++i) {
+            users.add(new UserEntity());
+        }
+        ModelHelpers.setUserFields(users.get(0), "testuser", "pass", "testuser_home");
+        ModelHelpers.setUserFields(users.get(1), "testuser2", "pass2", "home_testuser2");
         for (User user : users) {
             sqliteHDDB.addUser(user);
         }
@@ -483,59 +574,62 @@ public class SqliteHDDBTest {
 
     @Test
     public void testAddTag() throws Exception {
-        Tag [] tags = prepareTagsForTest();
-        assertCollectionIsConsistentWithDb(tags, Tag.class, "Id");
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        assertCollectionIsConsistentWithDb(nameToTagMap.values(), Tag.class, "Id");
     }
 
     @Test
     public void testAddTagWhenTagAlreadyExists() throws Exception {
-        Tag [] tags = prepareTagsForTest();
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
         Tag duplicateTag = new TagEntity();
-        duplicateTag.setName(tags[1].getName());
+        duplicateTag.setName("testtag");
 
         sqliteHDDB.addTag(duplicateTag);
 
-        assertTrue(TestHelpers.areItemsEqual(tags[1], duplicateTag));
+        assertTrue(TestHelpers.areItemsEqual(nameToTagMap.get("testtag"), duplicateTag));
     }
 
     @Test
     public void testDeleteTag() throws Exception {
-        Tag[] tags = prepareTagsForTest();
-        deleteItemTestTemplate(tags, Tag.class);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        deleteItemTestTemplate(nameToTagMap.values(), Tag.class);
     }
 
     @Test
     public void testDeleteTagUnassignFromFile() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> fileTagMap = prepareFileTagsForTest(tags, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> fileTagMap = prepareFileTagsForTest(nameToTagMap, pathToFileMap);
 
-        long deletedTagId = tags[0].getId();
-        sqliteHDDB.deleteTag(tags[0]);
-        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        long deletedTagId = nameToTagMap.get("testtag").getId();
+        sqliteHDDB.deleteTag(nameToTagMap.get("testtag"));
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(nameToTagMap.get("testtag"));
         assertEquals(0, actualFiles.size());
     }
 
     @Test
     public void testDeleteTagById() throws Exception {
-        Tag[] tags = prepareTagsForTest();
-        deleteItemByIdTestTemplate(tags, Tag.class);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        List<Tag> tagList = new ArrayList<Tag>();
+        tagList.addAll(nameToTagMap.values());
+        deleteItemByIdTestTemplate(tagList, Tag.class);
     }
 
     @Test
     public void testUpdateTag() throws Exception {
-        Tag[] tags = prepareTagsForTest();
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
         String expectedName = "newName";
-        tags[0].setName(expectedName);
+        nameToTagMap.get("testtag").setName(expectedName);
 
-        sqliteHDDB.updateTag(tags[0]);
+        sqliteHDDB.updateTag(nameToTagMap.get("testtag"));
 
-        assertCollectionIsConsistentWithDb(tags, Tag.class, "Id");
+        assertCollectionIsConsistentWithDb(nameToTagMap.values(), Tag.class, "Id");
     }
 
     @Test(expected = ItemNotFoundException.class)
     public void testUpdateTagWhenTagDoesNotExist() throws Exception {
-        Tag[] tags = prepareTagsForTest();
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
         Tag notExistingTag = new TagEntity();
         notExistingTag.setId(999);
         notExistingTag.setName("notExisting");
@@ -545,89 +639,85 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetTagByName() throws Exception {
-        Tag[] tags = prepareTagsForTest();
-        assertCollectionIsConsistentWithDb(tags, Tag.class, "Name");
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        assertCollectionIsConsistentWithDb(nameToTagMap.values(), Tag.class, "Name");
     }
 
     @Test(expected=ItemNotFoundException.class)
     public void testGetTagByNameWhenNameDoesNotOccur() throws Exception {
-        Tag[] tags = prepareTagsForTest();
-
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
         Tag tag = sqliteHDDB.getTagByName("notOccurringName");
     }
 
-    public Tag[] prepareTagsForTest() {
-        Tag[] tags = {
-                new TagEntity(),
-                new TagEntity(),
-                new TagEntity(),
-                new TagEntity()
-        };
-        tags[0].setName("testtag");
-        tags[1].setName("testtag2");
-        tags[2].setName("testtag3");
-        tags[3].setName("notUsedTag");
-        for (Tag tag: tags) {
+    public Map<String, Tag> prepareTagsForTest() {
+        Map<String, Tag> nameToTagMap = new HashMap<>();
+        String[] names = { "testtag", "testtag2", "testtag3", "notUsedTag" };
+        for (int i = 0; i < 4; ++i) {
+            Tag tag = new TagEntity();
+            tag.setName(names[i]);
+            nameToTagMap.put(names[i], tag);
             sqliteHDDB.addTag(tag);
         }
-        return tags;
+        return nameToTagMap;
     }
 
     @Test
     public void testAddRule() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
-        assertCollectionIsConsistentWithDb(rules, Rule.class, "Id");
+        assertCollectionIsConsistentWithDb(descToRuleMap.values(), Rule.class, "Id");
     }
 
     @Test
     public void testUpdateRule() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
-        rules[0].setFilePath(files[1].getPath());
-        rules[0].setOwner(owners[1]);
-        rules[0].setBody("{field: value}");
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        descToRuleMap.get("VN_testpath/location").setFilePath("testpath/location/name.ext");
+        descToRuleMap.get("VN_testpath/location").setOwner(owners.get(1));
+        descToRuleMap.get("VN_testpath/location").setBody("{field: value}");
 
-        sqliteHDDB.updateRule(rules[0]);
+        sqliteHDDB.updateRule(descToRuleMap.get("VN_testpath/location"));
 
-        assertCollectionIsConsistentWithDb(rules, Rule.class, "Id");
+        assertCollectionIsConsistentWithDb(descToRuleMap.values(), Rule.class, "Id");
     }
 
     @Test
     public void testGetValidRulesByFile() throws Exception {
-        /*User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
-        Map<File, Rule[]> expectedRulesForFileMap = new HashMap<>();
-        expectedRulesForFileMap.put(files[0], new Rule[] { rules[0], rules[5], rules[5], rules[6] });
-        expectedRulesForFileMap.put(files[1], new Rule[] { rules[5] });
-        expectedRulesForFileMap.put(files[2], new Rule[] { rules[3], rules[4], rules[5] });
-        // file[0, 1, 2] -> owner[0]
-        // file[3] -> owner[1]
+        Map<File, List<Rule>> expectedRulesForFileMap = new HashMap<>();
+        expectedRulesForFileMap.put(pathToFileMap.get("testpath/location"),
+                                    Arrays.asList(descToRuleMap.get("VN_testpath/location"), descToRuleMap.get("VV_global_owner0"),
+                                                  descToRuleMap.get("VV_global_owner01")));
+        expectedRulesForFileMap.put(pathToFileMap.get("testpath/location2/oname.ext"),
+                                    Arrays.asList(descToRuleMap.get("VV_testpath/location2/oname.ext"), descToRuleMap.get("VV_global_owner0"),
+                                                  descToRuleMap.get("VV_global_owner01")));
+        expectedRulesForFileMap.put(pathToFileMap.get("test_parent_path2/testpath"), Arrays.asList(descToRuleMap.get("VV_global_owner1")));
 
-        for (Map.Entry<File, Rule[]> expectedRulesForFile : expectedRulesForFileMap.entrySet()) {
+        for (Map.Entry<File, List<Rule>> expectedRulesForFile : expectedRulesForFileMap.entrySet()) {
             List<Rule> actualRulesForFile = sqliteHDDB.getValidRulesByFile(expectedRulesForFile.getKey());
-
-            assertEquals(expectedRulesForFile.getValue().length, actualRulesForFile.size());
+            assertEquals(expectedRulesForFile.getValue().size(), actualRulesForFile.size());
             for (Rule expectedRule : expectedRulesForFile.getValue()) {
                 TestHelpers.assertListContainsItemEqual(actualRulesForFile, expectedRule);
             }
-        }*/
+        }
     }
 
     @Test
     public void testGetValidGlobalRules() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
         Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
-        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[5], rules[6] });
-        expectedRulesForUserMap.put(owners[1], new Rule[] { rules[7] });
+        expectedRulesForUserMap.put(owners.get(0), new Rule[] { descToRuleMap.get("VV_global_owner0"),
+                                                            descToRuleMap.get("VV_global_owner01") });
+        expectedRulesForUserMap.put(owners.get(1), new Rule[] { descToRuleMap.get("VV_global_owner1") });
 
         List<Object> params = new ArrayList<>();
         assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidGlobalRules", params);
@@ -635,21 +725,21 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetValidGlobalRulesByType() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
         Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
-        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[6] });
-        expectedRulesForUserMap.put(owners[1], new Rule[] { rules[7] });
+        expectedRulesForUserMap.put(owners.get(0), new Rule[] { descToRuleMap.get("VV_global_owner01") });
+        expectedRulesForUserMap.put(owners.get(1), new Rule[] { descToRuleMap.get("VV_global_owner1") });
 
         List<Object> params = new ArrayList<Object>();
         params.add(2);
         assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidGlobalRulesByType", params);
 
         expectedRulesForUserMap.clear();
-        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[5] });
-        expectedRulesForUserMap.put(owners[1], new Rule[] {});
+        expectedRulesForUserMap.put(owners.get(0), new Rule[] { descToRuleMap.get("VV_global_owner0") });
+        expectedRulesForUserMap.put(owners.get(1), new Rule[] {});
 
         params.clear();
         params.add(8);
@@ -658,29 +748,30 @@ public class SqliteHDDBTest {
 
     @Test
     public void testGetValidSpecificRulesByTypeWhen3Args() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+
 
         Map<User, Rule[]> expectedRulesForUserMap = new HashMap<>();
-        expectedRulesForUserMap.put(owners[0], new Rule[] { rules[3] });
-        expectedRulesForUserMap.put(owners[1], new Rule[] {});
+        expectedRulesForUserMap.put(owners.get(0), new Rule[] { descToRuleMap.get("VV_testpath/location2/oname.ext") });
+        expectedRulesForUserMap.put(owners.get(1), new Rule[] {});
 
         List<Object> params = new ArrayList<Object>();
-        params.add(5);
-        params.add(files[2].getPath());
+        params.add(2);
+        params.add("testpath/location2/oname.ext");
         assertCorrectRulesAreGot(expectedRulesForUserMap, "getValidSpecificRulesByType", params);
     }
 
     @Test
     public void testRuleExists() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
 
-        assertTrue(sqliteHDDB.ruleExists(owners[0].getName(), files[0].getPath()));
-        assertFalse(sqliteHDDB.ruleExists("notExistingName", files[0].getPath()));
-        assertFalse(sqliteHDDB.ruleExists(owners[1].getName(), "notExistingPath"));
+        assertTrue(sqliteHDDB.ruleExists(owners.get(0).getName(), "testpath/location"));
+        assertFalse(sqliteHDDB.ruleExists("notExistingName", "testpath/location"));
+        assertFalse(sqliteHDDB.ruleExists(owners.get(1).getName(), "notExistingPath"));
     }
 
     public void assertCorrectRulesAreGot(Map<User, Rule[]> expectedRulesForUserMap, String methodName, List<Object> params) throws Exception {
@@ -700,82 +791,71 @@ public class SqliteHDDBTest {
 
     @Test
     public void testDeleteRule() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
-        deleteItemTestTemplate(rules, Rule.class);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        deleteItemTestTemplate(descToRuleMap.values(), Rule.class);
     }
 
     @Test
     public void testDeleteRuleById() throws Exception {
-        User[] owners = prepareUsersForTest();
-        File[] files = prepareFilesForTest();
-        Rule[] rules = prepareRulesForTest(owners, files);
-        deleteItemByIdTestTemplate(rules, Rule.class);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        List<Rule> actualRules = new ArrayList<>();
+        actualRules.addAll(descToRuleMap.values());
+        deleteItemByIdTestTemplate(actualRules, Rule.class);
     }
 
-    public Rule[] prepareRulesForTest(User[] owners, File[] files) {
-        Rule[] rules = {
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity(),
-                new RuleEntity()
-        };
-
+    public Map<String, Rule> prepareRulesForTest(List<User> owners, Map<String, File> pathToFileMap) {
+        Map<String, Rule> descToRuleMap = new HashMap<>();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
 
         Date validHoldsSince = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-01", formatter));
         Date invalidHoldsUntil = ModelHelpers.makeDateFromLocalDate(LocalDate.parse("2016-01-03", formatter));
-        ModelHelpers.setRuleFields(rules[0], "{}", validHoldsSince,
-                                   null, 2, files[0].getPath(), owners[0]);
-        ModelHelpers.setRuleFields(rules[1], "{}", validHoldsSince,
-                                   invalidHoldsUntil, 2, files[0].getPath(), owners[0]);
-        ModelHelpers.setRuleFields(rules[2], "{}", validHoldsSince,
-                                   invalidHoldsUntil, 8, files[1].getPath(), owners[0]);
+        addRuleToMap(descToRuleMap, "testpath/location", "VN", "{}", validHoldsSince, null, 2, owners.get(0));
+        addRuleToMap(descToRuleMap, "testpath/location", "VI",  "{}", validHoldsSince, invalidHoldsUntil, 2, owners.get(0));
+        addRuleToMap(descToRuleMap, "testpath/location/name.ext", "VI", "{}", validHoldsSince, invalidHoldsUntil, 8, owners.get(0));
         Date tomorrow = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().plusDays(1).toLocalDate());
-        ModelHelpers.setRuleFields(rules[3], "{}", null,
-                                   tomorrow, 5, files[2].getPath(), owners[0]);
+        addRuleToMap(descToRuleMap, "testpath/location/otherdir", "NV", "{}", null, tomorrow, 5, owners.get(0));
         Date yesterday = ModelHelpers.makeDateFromLocalDate(LocalDateTime.now().minusDays(1).toLocalDate());
-        ModelHelpers.setRuleFields(rules[4], "{}", yesterday,
-                                   tomorrow, 2, files[2].getPath(), owners[0]);
-        ModelHelpers.setRuleFields(rules[5], "{}", yesterday,
-                                   tomorrow, 8, null, owners[0]);
-        ModelHelpers.setRuleFields(rules[6], "{}", yesterday,
-                                   tomorrow, 2, null, owners[0]);
-        ModelHelpers.setRuleFields(rules[7], "{}", yesterday,
-                                   tomorrow, 2, null, owners[1]);
-        ModelHelpers.setRuleFields(rules[8], "{}", null,
-                                   yesterday, 2, null, owners[0]);
+        addRuleToMap(descToRuleMap, "testpath/location/otherdir/oname.ext", "VV", "{}", yesterday, tomorrow, 2, owners.get(0));
+        addRuleToMap(descToRuleMap, "testpath/location2/oname.ext", "VV", "{}", validHoldsSince, tomorrow, 2, owners.get(0));
+        // global rules
+        addRuleToMap(descToRuleMap, "global_owner0", "VV", "{}", yesterday, tomorrow, 8, owners.get(0));
+        descToRuleMap.get("VV_global_owner0").setFilePath(null);
+        addRuleToMap(descToRuleMap, "global_owner01", "VV", "{}", yesterday, tomorrow, 2, owners.get(0));
+        descToRuleMap.get("VV_global_owner01").setFilePath(null);
+        addRuleToMap(descToRuleMap, "global_owner1", "VV", "{}", yesterday, tomorrow, 2, owners.get(1));
+        descToRuleMap.get("VV_global_owner1").setFilePath(null);
+        addRuleToMap(descToRuleMap, "global_owner02", "NI", "{}", null, yesterday, 2, owners.get(0));
+        descToRuleMap.get("NI_global_owner02").setFilePath(null);
 
-        /*ModelHelpers.setFileFields(files[0], "fileName", 5621, secondDate,
-                owners[0], "test_parent_path1", "testpath/location/", File.FileType.Directory, 2);
-        ModelHelpers.setFileFields(files[1], "fileName2", 531, secondDate,
-                owners[0], "test_parent_path1", "testpath/location/name.ext", File.FileType.File, 2);
-        ModelHelpers.setFileFields(files[2], "fileName3", 113, firstDate,
-                owners[0], "test_parent_path2", "testpath/location2/", File.FileType.File, 1);
-        ModelHelpers.setFileFields(files[3], "fileName", 585, secondDate,
-                owners[1], "test_parent_path1", "testpath/", File.FileType.File, 4);*/
-        for (Rule rule : rules) {
+        for (Rule rule : descToRuleMap.values()) {
             sqliteHDDB.addRule(rule);
         }
-        return rules;
+        return descToRuleMap;
     }
+
+    void addRuleToMap(Map<String, Rule> descRuleMap, String path, String desc, String body,
+                      Date holdsSince, Date holdsUntil, int type, User owner) {
+        String key = desc + "_" + path;
+        descRuleMap.put(key, new RuleEntity());
+        ModelHelpers.setRuleFields(descRuleMap.get(key), body, holdsSince, holdsUntil, type, path, owner);
+    }
+
 
     @Test
     public void testAssignTag() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> tagToFileMap = prepareFileTagsForTest(nameToTagMap, pathToFileMap);
 
-        for (Map.Entry<Tag, File[]> tagFile : tagToFileMap.entrySet()) {
-            File[] expectedFiles = tagFile.getValue();
+        for (Map.Entry<Tag, List<File>> tagFile : tagToFileMap.entrySet()) {
+            List<File> expectedFiles = tagFile.getValue();
             List<File> actualFiles = sqliteHDDB.getFilesByTag(tagFile.getKey());
-            assertEquals(expectedFiles.length, actualFiles.size());
+            assertEquals(expectedFiles.size(), actualFiles.size());
             for (File expectedFile : expectedFiles) {
                 TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
             }
@@ -784,59 +864,64 @@ public class SqliteHDDBTest {
 
     @Test
     public void testUnassignTag() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> tagToFileMap = prepareFileTagsForTest(nameToTagMap, pathToFileMap);
 
-        sqliteHDDB.unassignTag(files[1], tags[2]);
-        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[2]);
+        sqliteHDDB.unassignTag(pathToFileMap.get("testpath/location/otherdir"), nameToTagMap.get("testtag3"));
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(nameToTagMap.get("testtag3"));
         assertEquals(0, actualFiles.size());
-        List<Tag> actualTags = sqliteHDDB.getFileTags(files[1]);
+        List<Tag> actualTags = sqliteHDDB.getFileTags(pathToFileMap.get("testpath/location/otherdir"));
         assertEquals(1, actualTags.size());
-        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+        TestHelpers.assertListContainsItemEqual(actualTags, nameToTagMap.get("testtag"));
 
-        sqliteHDDB.unassignTag(files[0], tags[0]);
-        actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        sqliteHDDB.unassignTag(pathToFileMap.get("testpath/location/name.ext"), nameToTagMap.get("testtag"));
+        actualFiles = sqliteHDDB.getFilesByTag(nameToTagMap.get("testtag"));
         assertEquals(1, actualFiles.size());
-        TestHelpers.assertListContainsItemEqual(actualFiles, files[2]);
-        actualTags = sqliteHDDB.getFileTags(files[0]);
+        TestHelpers.assertListContainsItemEqual(actualFiles, pathToFileMap.get("testpath/location/otherdir"));
+        actualTags = sqliteHDDB.getFileTags(pathToFileMap.get("testpath/location/name.ext"));
         assertEquals(1, actualTags.size());
-        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+        TestHelpers.assertListContainsItemEqual(actualTags, nameToTagMap.get("testtag2"));
     }
 
     @Test
     public void testGetFileTags() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> tagToFileMap = prepareFileTagsForTest(nameToTagMap, pathToFileMap);
 
-        List<Tag> actualTags = sqliteHDDB.getFileTags(files[0]);
+        List<Tag> actualTags = sqliteHDDB.getFileTags(pathToFileMap.get("testpath/location/name.ext"));
         assertEquals(2, actualTags.size());
-        TestHelpers.assertListContainsItemEqual(actualTags, tags[0]);
-        TestHelpers.assertListContainsItemEqual(actualTags, tags[1]);
+        TestHelpers.assertListContainsItemEqual(actualTags, nameToTagMap.get("testtag"));
+        TestHelpers.assertListContainsItemEqual(actualTags, nameToTagMap.get("testtag2"));
     }
 
     @Test
     public void testGetFilesByTag() throws Exception {
-        File[] files = prepareFilesForTest();
-        Tag[] tags = prepareTagsForTest();
-        Map<Tag, File[]> tagToFileMap = prepareFileTagsForTest(tags, files);
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> tagToFileMap = prepareFileTagsForTest(nameToTagMap, pathToFileMap);
 
-        List<File> actualFiles = sqliteHDDB.getFilesByTag(tags[0]);
+        List<File> actualFiles = sqliteHDDB.getFilesByTag(nameToTagMap.get("testtag"));
         assertEquals(2, actualFiles.size());
-        for (File expectedFile : tagToFileMap.get(tags[0])) {
+        for (File expectedFile : tagToFileMap.get(nameToTagMap.get("testtag"))) {
             TestHelpers.assertListContainsItemEqual(actualFiles, expectedFile);
         }
     }
 
-    public Map<Tag, File[]> prepareFileTagsForTest(Tag[] tags, File[] files) {
-        Map<Tag, File[]> tagFileMap = new HashMap<>();
-        tagFileMap.put(tags[0], new File[] { files[0], files[2] });
-        tagFileMap.put(tags[1], new File[] { files[0], files[1] });
-        tagFileMap.put(tags[2], new File[] { files[1] });
-        tagFileMap.put(tags[3], new File[] {});
-        for (Map.Entry<Tag, File[]> tagFile : tagFileMap.entrySet()) {
-            File[] filesAssignedToTag = tagFile.getValue();
+    public Map<Tag, List<File>> prepareFileTagsForTest(Map<String, Tag> nameToTagMap, Map<String, File> pathToFileMap) {
+        Map<Tag, List<File>> tagFileMap = new HashMap<>();
+        tagFileMap.put(nameToTagMap.get("testtag"), Arrays.asList(pathToFileMap.get("testpath/location/name.ext"),
+                                                                  pathToFileMap.get("testpath/location/otherdir")));
+        tagFileMap.put(nameToTagMap.get("testtag2"), Arrays.asList(pathToFileMap.get("testpath/location/name.ext"),
+                                                                   pathToFileMap.get("testpath/location/otherdir/oname.ext")));
+        tagFileMap.put(nameToTagMap.get("testtag3"), Arrays.asList(pathToFileMap.get("testpath/location/otherdir")));
+        tagFileMap.put(nameToTagMap.get("notUsedTag"), Collections.emptyList());
+        for (Map.Entry<Tag, List<File>> tagFile : tagFileMap.entrySet()) {
+            List<File> filesAssignedToTag = tagFile.getValue();
             for (File fileAssignedToTag : filesAssignedToTag) {
                 sqliteHDDB.assignTag(fileAssignedToTag, tagFile.getKey());
             }

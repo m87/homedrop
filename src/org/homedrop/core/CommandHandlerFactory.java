@@ -15,7 +15,7 @@ public class CommandHandlerFactory {
             case HD.FILE_INIT: return new FileInitHandler(request);
             case HD.FILE_JSON: return new FileJSONHandler(request);
             case HD.FILE_R: return new FileReportReceivedHandler(request);
-            case HD.RENAME: return new RenameHandler(request);
+            case HD.RENAME: return null; // TODO: change for renameHandler
         }
         return new NoHandler(request);
     }

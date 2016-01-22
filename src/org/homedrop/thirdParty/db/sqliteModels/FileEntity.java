@@ -15,9 +15,6 @@ public class FileEntity extends File {
     private long id;
 
     @DatabaseField(canBeNull = false)
-    private String name;
-
-    @DatabaseField(canBeNull = false)
     private String parentPath;
 
     @DatabaseField(canBeNull = false)
@@ -38,6 +35,9 @@ public class FileEntity extends File {
     @DatabaseField(canBeNull = false, foreign = true)
     private UserEntity owner;
 
+    @DatabaseField(canBeNull = false)
+    private boolean backup;
+
     public FileEntity(){
 
     }
@@ -47,13 +47,6 @@ public class FileEntity extends File {
     }
     public void setId(long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getParentPath() {

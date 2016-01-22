@@ -10,7 +10,7 @@ public class UserEntity extends User {
     @DatabaseField(generatedId = true)
     private long id;
 
-    @DatabaseField(canBeNull = false, unique = true)
+    @DatabaseField(canBeNull = false, uniqueIndex = true)
     private String name;
 
     @DatabaseField(canBeNull = false)

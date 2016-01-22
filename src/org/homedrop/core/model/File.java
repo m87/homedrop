@@ -11,9 +11,6 @@ public abstract class File implements Identifiable {
     public abstract long getId();
     public abstract void setId(long id);
 
-    public abstract String getName();
-    public abstract void setName(String name);
-
     public abstract String getParentPath();
     public abstract void setParentPath(String path);
 

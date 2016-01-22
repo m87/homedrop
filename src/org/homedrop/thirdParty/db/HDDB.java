@@ -27,23 +27,17 @@ public interface HDDB {
     List<Rule> getAllRules();
 
     /**
+     * Get list of all files
+     * @return list of all files
+     */
+    List<File> getAllFiles();
+
+    /**
      * Add new file to database. If success change file id for created entity id.
      * If fail change file id for IdFailed
      * @param file
      */
     void addFile(File file);
-
-    /**
-     * Delete file from database.
-     * @param file
-     */
-    void deleteFile(File file);
-
-    /**
-     * Delete file with given id from database.
-     * @param id
-     */
-    void deleteFileById(long id);
 
     /**
      * Delete file with given path from database.
@@ -52,7 +46,7 @@ public interface HDDB {
      * @param username
      * @param filePath
      */
-    void deleteFileByPath(String username, String filePath);
+    void deleteFileByPath(String username, String filePath) throws ItemNotFoundException;
 
     /**
      * Update file with id equal to id of given file object.
@@ -61,28 +55,31 @@ public interface HDDB {
     void updateFile(File file) throws ItemNotFoundException;
 
     /**
-     * Rename file if exists to path not owned by any file
+     * Rename file if exists to path not owned by any file.
      * @param username
      * @param pathSrc
      * @param pathDest
      */
-    void renameFile(String username, String pathSrc, String pathDest)
-            throws ItemNotFoundException, ItemWithValueAlreadyExistsException;
+    void renameFile(String username, String pathSrc, String pathDest) throws ItemNotFoundException,
+        ItemWithValueAlreadyExistsException;
 
     /**
-     * Get all files of given name.
-     * @param name
-     * @return All files of given name
+     * Remove subtree with pathDest if necessary and then rename.
+     * @param username
+     * @param pathSrc
+     * @param pathDest
+     * @throws ItemNotFoundException
+     * @throws ItemWithValueAlreadyExistsException
      */
-    List<File> getFilesByName(String name);
-
+    void renameFileReplaceIfNecessary(String username, String pathSrc, String pathDest)
+            throws ItemNotFoundException, ItemWithValueAlreadyExistsException;
     /**
      * Get all files of given parent path.
      * @param path
-     * @param owner - path is relative, we want files of specific user
+     * @param username - path is relative, we want files of specific user
      * @return All files of given path
      */
-    List<File> getFilesByParentPath(String path, User owner);
+    List<File> getFilesByParentPath(String username, String parentPath);
 
     /**
      * Get all files belonging to the subtree
@@ -90,8 +87,16 @@ public interface HDDB {
      * @param prefix
      * @return All files of given path prefix
      */
-    List<File> getSubtreeWithContainingDirectory(String username, String prefix);
+    List<File> getSubtreeWithRootDirectory(String username, String prefix);
 
+    /**
+     * Gets all files belonging to the subtree, yet without its root.
+     * @param username
+     * @param prefix
+     * @return All files belonging to the subtree without its root
+     * @throws ItemNotFoundException
+     */
+    List<File>getSubtreeExcludingRootDirectory(String username, String prefix);
     /**
      * Checks if file of owner with username and given path exists
      * @param username
