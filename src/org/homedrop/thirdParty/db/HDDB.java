@@ -59,6 +59,7 @@ public interface HDDB {
      * @param username
      * @param pathSrc
      * @param pathDest
+     * @throws ItemWithValueAlreadyExistsException
      */
     void renameFile(String username, String pathSrc, String pathDest) throws ItemNotFoundException,
         ItemWithValueAlreadyExistsException;
@@ -69,10 +70,9 @@ public interface HDDB {
      * @param pathSrc
      * @param pathDest
      * @throws ItemNotFoundException
-     * @throws ItemWithValueAlreadyExistsException
      */
     void renameFileReplaceIfNecessary(String username, String pathSrc, String pathDest)
-            throws ItemNotFoundException, ItemWithValueAlreadyExistsException;
+            throws ItemNotFoundException;
     /**
      * Get all files of given parent path.
      * @param path

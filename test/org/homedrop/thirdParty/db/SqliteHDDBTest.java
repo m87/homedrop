@@ -30,6 +30,7 @@ import java.util.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.concurrent.Callable;
+import java.util.concurrent.SynchronousQueue;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -157,6 +158,7 @@ public class SqliteHDDBTest {
 
         sqliteHDDB.renameFile(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
 
+
         assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
         assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
     }
@@ -185,6 +187,9 @@ public class SqliteHDDBTest {
                 }
                 else {
                     ((File)item).setPath(newPath);
+                    String oldParentPath = ((File)item).getParentPath();
+                    ((File)item).setParentPath(oldParentPath.replaceFirst(pathSrc + "(?=($|/))", pathDest));
+                    System.out.println(((File)item).getParentPath());
                 }
             }
             return item;
@@ -197,6 +202,11 @@ public class SqliteHDDBTest {
             actualItems.addAll(sqliteHDDB.getAllFiles());
         }
         assertEquals(expectedItems.size(), actualItems.size());
+        for (Identifiable actualFile : actualItems) {
+            if (type.equals("file")) {
+                System.out.println(((File)actualFile).getParentPath());
+            }
+        }
         for (Identifiable expectedFile : expectedItems) {
             TestHelpers.assertListContainsItemEqual(actualItems, expectedFile);
         }
