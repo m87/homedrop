@@ -20,10 +20,10 @@ public class DelHandler extends CommandHandler {
             FilesManager.getInstance().delete(request.getUserName(),request.getCommand().getArgs()[0]);
         } catch (ItemNotFoundException e) {
             Log.d(LogTag.DB, e.getMessage());
-            return new Result(Result.ERROR, "");
+            return new Result(Result.ERROR, "error");
         }
 
-        return new Result(Result.OK, "");
+        return new Result(Result.OK, "ok");
 
     }
 

@@ -74,7 +74,6 @@ public class FilesManager implements LifeCycle {
     public boolean delete(String userName, String path) throws ItemNotFoundException {
         DBManager.getInstance().getDb().deleteFileByPath(userName, DBHelper.formatPath(path));
         FileUtils.deleteQuietly(new java.io.File(DBHelper.mapUserPathAsString(userName, path)));
-
         return true;
     }
 
@@ -87,7 +86,7 @@ public class FilesManager implements LifeCycle {
         Log.d(LogTag.DEV, path);
         Path p = Paths.get(path);
         HDDB db = DBManager.getInstance().getDb();
-        List<File> out = db.getFilesByParentPath(userName, path);
+        List<File> out = db.getFilesByParentPath(userName, DBHelper.formatPath(path));
         return out;
     }
 

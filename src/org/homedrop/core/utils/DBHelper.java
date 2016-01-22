@@ -38,6 +38,7 @@ public class DBHelper {
 
     public static String formatPath(String path){
         String tmp = path;
+        if(path.trim().equals("/")) return path;
         if(path.endsWith("/")){
             tmp = path.substring(0, path.length()-1);
         }
