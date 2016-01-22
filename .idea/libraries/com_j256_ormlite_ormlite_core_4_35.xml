@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="com.j256.ormlite:ormlite-core:4.35" type="repository">
+    <properties maven-id="com.j256.ormlite:ormlite-core:4.35" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/ormlite-core-4.35.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

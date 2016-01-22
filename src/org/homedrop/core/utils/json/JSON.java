@@ -31,7 +31,14 @@ public class JSON {
     public static String files(List<File> files){
         List<MetaFile> tmp = new ArrayList<>();
         for(File file : files){
-            tmp.add(new MetaFile(file.getPath()));
+            MetaFile mf = new MetaFile(file.getPath());
+            if(file.isDirectory()){
+                mf.isDir=true;
+            }else{
+                mf.isDir=false;
+            }
+            mf.fileTransfered=false;
+            tmp.add(mf);
         }
         return JSONConverter.files(tmp);
     }
