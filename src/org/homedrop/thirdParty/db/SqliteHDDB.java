@@ -167,34 +167,20 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void renameFile(String username, String pathSrc, String pathDest)
             throws ItemNotFoundException {
+        final String formattedPathSrc = DBHelper.formatPath(pathSrc);
+        final String formattedPathDest = DBHelper.formatPath(pathDest);
         try {
             TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
-                List<File> files = getSubtreeWithRootDirectory(username, pathSrc);
+                List<File> files = getSubtreeWithRootDirectory(username, formattedPathSrc);
                 if (0 == files.size()) {
                     throw new ItemNotFoundException("Attempt to rename not existing files!");
                 }
 
-                List<Long> fileIds = files.stream().map(File::getId).collect(toList());
                 List<String> filePaths = files.stream().map(File::getPath).collect(toList());
                 UpdateBuilder<RuleEntity, Long> updateBuilder = ruleDao.updateBuilder();
-                for (String filePath : filePaths) {
-                    String newFilePath = pathDest + filePath.substring(pathSrc.length());
-                    // we don't have you use regex because we work on subtree,
-                    // thus all files begin with pathSrc
-                    updateBuilder.where().eq("filePath", filePath);
-                    updateBuilder.updateColumnValue("filePath", newFilePath);
-                    updateBuilder.update();
-                    updateBuilder.reset();
-                }
-                // remove rules assigned to files to be removed
+                updateItemsHavingPath(updateBuilder, filePaths, pathSrc, pathDest, "filePath");
                 UpdateBuilder<FileEntity, Long> fileUpdateBuilder = fileDao.updateBuilder();
-                for (String filePath : filePaths) {
-                    String newFilePath = pathDest + filePath.substring(pathSrc.length());
-                    fileUpdateBuilder.where().eq("path", filePath);
-                    fileUpdateBuilder.updateColumnValue("path", newFilePath);
-                    fileUpdateBuilder.update();
-                    fileUpdateBuilder.reset();
-                }
+                updateItemsHavingPath(fileUpdateBuilder, filePaths, pathSrc, pathDest, "path");
                 return null;
             });
         }
@@ -203,6 +189,17 @@ public class SqliteHDDB implements HDDB {
             if (e.getCause() instanceof ItemNotFoundException) {
                 throw (ItemNotFoundException) e.getCause();
             }
+        }
+    }
+
+    public static <T> void updateItemsHavingPath(UpdateBuilder<T, Long> updateBuilder, List<String> filePaths,
+                                                String pathSrc, String pathDest, String pathField) throws SQLException {
+        for (String filePath : filePaths) {
+            String newFilePath = pathDest + filePath.substring(pathSrc.length());
+            updateBuilder.where().eq(pathField, filePath);
+            updateBuilder.updateColumnValue(pathField, newFilePath);
+            updateBuilder.update();
+            updateBuilder.reset();
         }
     }
 
