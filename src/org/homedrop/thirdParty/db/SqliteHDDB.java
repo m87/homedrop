@@ -21,6 +21,7 @@ import org.homedrop.thirdParty.db.sqliteModels.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.SynchronousQueue;
 
 import static java.util.stream.Collectors.toList;
 
@@ -166,7 +167,43 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void renameFile(String username, String pathSrc, String pathDest)
             throws ItemNotFoundException {
-        //TODO: implement (remember about updating all subtree and rules)
+        try {
+            TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
+                List<File> files = getSubtreeWithRootDirectory(username, pathSrc);
+                if (0 == files.size()) {
+                    throw new ItemNotFoundException("Attempt to rename not existing files!");
+                }
+
+                List<Long> fileIds = files.stream().map(File::getId).collect(toList());
+                List<String> filePaths = files.stream().map(File::getPath).collect(toList());
+                UpdateBuilder<RuleEntity, Long> updateBuilder = ruleDao.updateBuilder();
+                for (String filePath : filePaths) {
+                    String newFilePath = pathDest + filePath.substring(pathSrc.length());
+                    // we don't have you use regex because we work on subtree,
+                    // thus all files begin with pathSrc
+                    updateBuilder.where().eq("filePath", filePath);
+                    updateBuilder.updateColumnValue("filePath", newFilePath);
+                    updateBuilder.update();
+                    updateBuilder.reset();
+                }
+                // remove rules assigned to files to be removed
+                UpdateBuilder<FileEntity, Long> fileUpdateBuilder = fileDao.updateBuilder();
+                for (String filePath : filePaths) {
+                    String newFilePath = pathDest + filePath.substring(pathSrc.length());
+                    fileUpdateBuilder.where().eq("path", filePath);
+                    fileUpdateBuilder.updateColumnValue("path", newFilePath);
+                    fileUpdateBuilder.update();
+                    fileUpdateBuilder.reset();
+                }
+                return null;
+            });
+        }
+        catch (SQLException e) {
+            Log.d(LogTag.DB, "Sql transaction error! [Could not rename files by path: " + pathSrc + "]");
+            if (e.getCause() instanceof ItemNotFoundException) {
+                throw (ItemNotFoundException) e.getCause();
+            }
+        }
     }
 
     @Override
@@ -426,7 +463,7 @@ public class SqliteHDDB implements HDDB {
         List<Rule> validRules = new ArrayList<>();
         try {
             User owner = getUserById(file.getOwnerId());
-            validRules = getRules(owner.getName(), -1, file.getPath(), true);
+            validRules = getRules(owner.getName(), AnyType, file.getPath(), true);
         }
         catch (ItemNotFoundException e) {
             Log.d(LogTag.DB, "Couldn't find owner of requested file to get rules for!");
@@ -456,7 +493,7 @@ public class SqliteHDDB implements HDDB {
 
     @Override
     public boolean ruleExists(String username, String filePath) {
-        List<Rule> rules = getRules(username, -1, filePath, false);
+        List<Rule> rules = getRules(username, AnyType, filePath, false);
         return rules.size() > 0;
     }
 
@@ -652,7 +689,6 @@ public class SqliteHDDB implements HDDB {
             Log.i(LogTag.DB, entityName + " a group of entities successfully deleted.");
         } catch (SQLException e) {
             Log.d(LogTag.DB, "Sql error! [" + entityName + " deletion :: "+e.getMessage()+" ]");
-            e.printStackTrace();
         }
     }
 

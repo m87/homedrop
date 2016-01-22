@@ -30,6 +30,7 @@ import java.util.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -144,6 +145,61 @@ public class SqliteHDDBTest {
         List<User> owners = prepareUsersForTest();
         Map<String, File> pathToFileMap = prepareFilesForTest(owners);
         assertCollectionIsConsistentWithDb(pathToFileMap.values(), File.class, "Id");
+    }
+
+    @Test
+    public void testRenameFileWhenDirectoryIsRenamed() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        String pathSrc = "testpath/location";
+        String pathDest = "testpath/location_new";
+
+        sqliteHDDB.renameFile(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
+
+        assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
+        assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
+    }
+
+    @Test
+    public void testRenameFileWhenFileIsRenamed() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        String pathSrc = "testpath/location/name.ext";
+        String pathDest = "testpath/location/newname.ext";
+
+        sqliteHDDB.renameFile(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
+
+        assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
+        assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
+    }
+
+    void assertItemsProperlyRenamed(Collection<? extends Identifiable> items, String pathSrc, String pathDest, String type) {
+        List<Identifiable> expectedItems = items.stream().map((item) -> {
+            String oldPath = (item instanceof Rule) ? ((Rule)item).getFilePath() : ((File)item).getPath();
+            if (null != oldPath) {
+                String newPath = oldPath.replaceFirst(pathSrc + "(?=($|/))", pathDest);
+                if (item instanceof Rule) {
+                    ((Rule)item).setFilePath(newPath);
+                }
+                else {
+                    ((File)item).setPath(newPath);
+                }
+            }
+            return item;
+        }).collect(toList());
+        List<Identifiable> actualItems = new ArrayList<>();
+        if (type.equals("rule")) {
+            actualItems.addAll(sqliteHDDB.getAllRules());
+        }
+        else {
+            actualItems.addAll(sqliteHDDB.getAllFiles());
+        }
+        assertEquals(expectedItems.size(), actualItems.size());
+        for (Identifiable expectedFile : expectedItems) {
+            TestHelpers.assertListContainsItemEqual(actualItems, expectedFile);
+        }
     }
 
     @Test
