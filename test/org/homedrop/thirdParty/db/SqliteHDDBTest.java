@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -149,6 +151,50 @@ public class SqliteHDDBTest {
     }
 
     @Test
+    public void testRenameFileReplaceIfNecessaryWhenNoReplacing() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        String pathSrc = "testpath/location";
+        String pathDest = "testpath/location_new";
+
+        sqliteHDDB.renameFileReplaceIfNecessary(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
+
+        assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
+        assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
+    }
+
+    @Test
+    public void testRenameFileReplaceIfNecessaryWhenReplacing() throws Exception {
+        List<User> owners = prepareUsersForTest();
+        Map<String, File> pathToFileMap = prepareFilesForTest(owners);
+        Map<String, Rule> descToRuleMap = prepareRulesForTest(owners, pathToFileMap);
+        Map<String, Tag> nameToTagMap = prepareTagsForTest();
+        Map<Tag, List<File>> tagsToFiles =  prepareFileTagsForTest(nameToTagMap, pathToFileMap);
+        sqliteHDDB.assignTag(pathToFileMap.get("testpath/location2/oname.ext"), nameToTagMap.get("testtag2"));
+        sqliteHDDB.assignTag(pathToFileMap.get("testpath/location2/oname.ext"), nameToTagMap.get("testtag3"));
+
+        String pathSrc = "testpath/location/otherdir/oname.ext"; // testtag2
+        String pathDest = "testpath/location2/oname.ext";
+
+        sqliteHDDB.renameFileReplaceIfNecessary(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
+
+        File updatedFile = pathToFileMap.get("testpath/location/otherdir/oname.ext");
+        pathToFileMap.remove("testpath/location/otherdir/oname.ext");
+        pathToFileMap.put("testpath/location2/oname.ext", updatedFile);
+
+        Rule ruleToMove = descToRuleMap.get("VV_testpath/location/otherdir/oname.ext");
+        descToRuleMap.remove("VV_testpath/location/otherdir/oname.ext");
+        descToRuleMap.put("VV_testpath/location2/oname.ext", ruleToMove);
+        List<Tag> actualTags = sqliteHDDB.getFileTags(pathToFileMap.get("testpath/location2/oname.ext"));
+        assertEquals(1, actualTags.size());
+        assertTrue(TestHelpers.areItemsEqual(actualTags.get(0), nameToTagMap.get("testtag2")));
+
+        assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
+        assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
+    }
+
+    @Test
     public void testRenameFileWhenDirectoryIsRenamed() throws Exception {
         List<User> owners = prepareUsersForTest();
         Map<String, File> pathToFileMap = prepareFilesForTest(owners);
@@ -157,7 +203,6 @@ public class SqliteHDDBTest {
         String pathDest = "testpath/location_new";
 
         sqliteHDDB.renameFile(pathToFileMap.get(pathSrc).getOwner().getName(), pathSrc, pathDest);
-
 
         assertItemsProperlyRenamed(pathToFileMap.values(), pathSrc, pathDest, "file");
         assertItemsProperlyRenamed(descToRuleMap.values(), pathSrc, pathDest, "rule");
@@ -182,14 +227,16 @@ public class SqliteHDDBTest {
             String oldPath = (item instanceof Rule) ? ((Rule)item).getFilePath() : ((File)item).getPath();
             if (null != oldPath) {
                 String newPath = oldPath.replaceFirst(pathSrc + "(?=($|/))", pathDest);
+                if (newPath.equals(oldPath)) {
+                    return item;
+                }
                 if (item instanceof Rule) {
                     ((Rule)item).setFilePath(newPath);
                 }
                 else {
                     ((File)item).setPath(newPath);
-                    String oldParentPath = ((File)item).getParentPath();
-                    ((File)item).setParentPath(oldParentPath.replaceFirst(pathSrc + "(?=($|/))", pathDest));
-                    System.out.println(((File)item).getParentPath());
+                    Path parentPath = Paths.get(newPath).getParent();
+                    ((File)item).setParentPath(parentPath.toString());
                 }
             }
             return item;
@@ -202,13 +249,8 @@ public class SqliteHDDBTest {
             actualItems.addAll(sqliteHDDB.getAllFiles());
         }
         assertEquals(expectedItems.size(), actualItems.size());
-        for (Identifiable actualFile : actualItems) {
-            if (type.equals("file")) {
-                System.out.println(((File)actualFile).getParentPath());
-            }
-        }
-        for (Identifiable expectedFile : expectedItems) {
-            TestHelpers.assertListContainsItemEqual(actualItems, expectedFile);
+        for (Identifiable expectedItem : expectedItems) {
+            TestHelpers.assertListContainsItemEqual(actualItems, expectedItem);
         }
     }
 

@@ -18,6 +18,8 @@ import org.homedrop.core.utils.exceptions.ItemNotFoundException;
 import org.homedrop.core.utils.exceptions.ItemWithValueAlreadyExistsException;
 import org.homedrop.thirdParty.db.sqliteModels.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -165,28 +167,22 @@ public class SqliteHDDB implements HDDB {
     @Override
     public void renameFileReplaceIfNecessary(String username, String pathSrc, String pathDest)
             throws ItemNotFoundException {
-        final String formattedPathSrc = DBHelper.formatPath(pathSrc);
-        final String formattedPathDest = DBHelper.formatPath(pathDest);
         try {
-            TransactionManager.callInTransaction(connectionSource, (Callable<Void>) () -> {
-                List<File> files = getSubtreeWithRootDirectory(username, formattedPathSrc);
-                if (0 == files.size()) {
-                    throw new ItemNotFoundException("Attempt to rename not existing files!");
-                }
-                List<File> filesToReplace = getSubtreeWithRootDirectory(username, formattedPathDest);
-                deleteFileByPathWithinTransaction(username, pathDest);
-
-                return null;
-            });
+            renameTemplate(username, pathSrc, pathDest, true);
         }
-        catch (SQLException e) {
-
+        catch (ItemWithValueAlreadyExistsException e) {
+            // will never happen
         }
     }
 
     @Override
     public void renameFile(String username, String pathSrc, String pathDest)
             throws ItemNotFoundException, ItemWithValueAlreadyExistsException {
+        renameTemplate(username, pathSrc, pathDest, false);
+    }
+
+    void renameTemplate(String username, String pathSrc, String pathDest, boolean doReplace)
+            throws ItemNotFoundException, ItemWithValueAlreadyExistsException  {
         final String formattedPathSrc = DBHelper.formatPath(pathSrc);
         final String formattedPathDest = DBHelper.formatPath(pathDest);
         try {
@@ -195,10 +191,18 @@ public class SqliteHDDB implements HDDB {
                 if (0 == files.size()) {
                     throw new ItemNotFoundException("Attempt to rename not existing files!");
                 }
-                if (0 < getSubtreeWithRootDirectory(username, formattedPathDest).size()) {
+
+                if (!doReplace && 0 < getSubtreeWithRootDirectory(username, formattedPathDest).size()) {
                     throw new ItemWithValueAlreadyExistsException("Attempt to rename for already existing file!");
                 }
 
+                if (doReplace) {
+                    List<File> filesToReplace = getSubtreeWithRootDirectory(username, formattedPathDest);
+                    if (0 < filesToReplace.size()) {
+                        deleteFileByPathWithinTransaction(username, pathDest);
+                    }
+
+                }
                 UpdateBuilder<RuleEntity, Long> updateBuilder = ruleDao.updateBuilder();
                 updateItemsHavingPath(updateBuilder, files, pathSrc, pathDest, "filePath");
                 UpdateBuilder<FileEntity, Long> fileUpdateBuilder = fileDao.updateBuilder();
@@ -208,6 +212,7 @@ public class SqliteHDDB implements HDDB {
         }
         catch (SQLException e) {
             Log.d(LogTag.DB, "Sql transaction error! [Could not rename files by path: " + pathSrc + "]");
+            e.printStackTrace();
             if (e.getCause() instanceof ItemNotFoundException) {
                 throw (ItemNotFoundException) e.getCause();
             }
@@ -223,9 +228,9 @@ public class SqliteHDDB implements HDDB {
             String newFilePath = pathDest + file.getPath().substring(pathSrc.length());
             updateBuilder.where().eq(pathField, file.getPath());
             updateBuilder.updateColumnValue(pathField, newFilePath);
-            if (pathField.equals("path") && file.getParentPath().startsWith(pathSrc)) {
-                String newFileParentPath = pathDest + file.getParentPath().substring(pathSrc.length());
-                updateBuilder.updateColumnValue("parentPath", newFileParentPath);
+            if (pathField.equals("path")) {
+                Path parentPath = Paths.get(newFilePath).getParent();
+                    updateBuilder.updateColumnValue("parentPath", parentPath.toString());
             }
             updateBuilder.update();
             updateBuilder.reset();
